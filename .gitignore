@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.local
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+.vscode/
+
+# Local DB files
+*.db
+*.sqlite3
+detected_targets.json
