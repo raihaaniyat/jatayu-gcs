@@ -15,6 +15,7 @@ MODE_MAP_INV = {v: k for k, v in ARDUPLANE_MODES.items()}
 router = APIRouter()
 log = logging.getLogger("gcs.telemetry")
 
+LATEST_TELEMETRY = TelemetryResponse()
 
 @router.get("/telemetry", response_model=TelemetryResponse)
 async def get_telemetry():
@@ -42,17 +43,29 @@ async def get_telemetry():
             custom_mode = heartbeat.get("custom_mode", 0)
             mode = MODE_MAP_INV.get(custom_mode, f"MODE_{custom_mode}")
 
-            # Battery
-            battery = None
+            # Battery percentage calculation
+            battery = 0
             voltage = sys_status.get("voltage_battery", 0)
-            if voltage > 0:
-                battery = voltage / 1000.0  # mV → V
+            battery_rem = sys_status.get("battery_remaining", -1)
+            
+            if battery_rem > 0:
+                battery = battery_rem
+            elif voltage > 0:
+                v = voltage / 1000.0
+                # Approximation for a 3S battery
+                battery = max(0, min(100, int((v - 10.5) / (12.6 - 10.5) * 100)))
 
-            return TelemetryResponse(
+            satellites_visible = gps_raw.get("satellites_visible", 0)
+            fix_type = gps_raw.get("fix_type", 0)
+
+            global LATEST_TELEMETRY
+            LATEST_TELEMETRY = TelemetryResponse(
                 lat=lat, lon=lon, alt_m=alt_m, hdg=hdg,
                 mode=mode, battery=battery, link="online",
                 ground_speed=ground_speed, climb_rate=climb_rate,
+                gps_sats=satellites_visible, gps_fix_type=fix_type
             )
+            return LATEST_TELEMETRY
     except requests.exceptions.ConnectionError:
         log.debug("Telemetry server unreachable")
     except requests.exceptions.Timeout:

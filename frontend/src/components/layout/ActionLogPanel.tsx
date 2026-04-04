@@ -25,7 +25,7 @@ export default function ActionLogPanel() {
         onClick={() => setActionLogOpen(true)}
         className="gcs-btn gcs-btn-ghost"
         style={{
-          position: 'fixed', bottom: 20, right: 20, zIndex: 50,
+          position: 'fixed', bottom: 20, right: 20, zIndex: 2000,
           background: 'var(--gcs-card)', boxShadow: 'var(--gcs-shadow-lg)',
           gap: 8,
         }}
@@ -48,7 +48,7 @@ export default function ActionLogPanel() {
 
   return (
     <div style={{
-      position: 'fixed', bottom: 20, right: 20, zIndex: 50,
+      position: 'fixed', bottom: 20, right: 20, zIndex: 2000,
       width: 440, maxHeight: 500,
       display: 'flex', flexDirection: 'column',
       background: 'var(--gcs-card)', border: '1px solid var(--gcs-border)',

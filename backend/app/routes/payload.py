@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from fastapi import APIRouter
 from app.models import PayloadDropRequest, PayloadDropEvent, PayloadStatus
+from app.mavlink_service import mav_service
 
 router = APIRouter()
 log = logging.getLogger("gcs.payload")
@@ -34,12 +35,7 @@ async def drop_payload(request: PayloadDropRequest):
 
     log.warning(f"PAYLOAD DROP COMMAND → target={request.target_id} ({request.gps_lat:.6f}, {request.gps_lon:.6f})")
 
-    # TODO: Actual servo actuation via MAVLink:
-    # self.drone.mav.command_long_send(
-    #     target_system, target_component,
-    #     mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
-    #     0, servo_num, pwm_value, 0, 0, 0, 0, 0
-    # )
+    success = mav_service.cmd_set_servo_11_max()
 
     event = {
         "id": event_id,
@@ -47,16 +43,21 @@ async def drop_payload(request: PayloadDropRequest):
         "gps_lat": request.gps_lat,
         "gps_lon": request.gps_lon,
         "drop_mode": request.drop_mode,
-        "status": "drop_completed",  # Simulated success
+        "status": "drop_completed" if success else "drop_failed",
         "timestamp": timestamp,
         "ack_timestamp": timestamp,
     }
     _payload_history.append(event)
 
-    _payload_status["last_drop_time"] = timestamp
-    _payload_status["payload_count"] = max(0, _payload_status["payload_count"] - 1)
+    if success:
+        _payload_status["last_drop_time"] = timestamp
+        _payload_status["payload_count"] = max(0, _payload_status["payload_count"] - 1)
 
-    log.info(f"Payload drop completed: {event_id}")
+    if success:
+        log.info(f"Payload drop completed: {event_id}")
+    else:
+        log.error(f"Payload drop failed: {event_id}")
+        
     return PayloadDropEvent(**event)
 
 

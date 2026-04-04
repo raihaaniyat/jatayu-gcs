@@ -40,8 +40,20 @@ export default function Sidebar() {
   return (
     <nav className="gcs-sidebar">
       {/* Brand */}
-      <div className="gcs-sidebar-brand">
-        <div className="gcs-sidebar-logo">J</div>
+      <div className="gcs-sidebar-brand" style={{ padding: '24px 20px', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', flexShrink: 0 }}>
+          <img 
+            src="/favicon_bgremoved.png" 
+            alt="Jatayu Logo" 
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.15))',
+              transform: 'scale(1.15)'
+            }} 
+          />
+        </div>
         <div>
           <div className="gcs-sidebar-title">JATAYU</div>
           <div className="gcs-sidebar-subtitle">GROUND CONTROL</div>
@@ -85,6 +97,13 @@ export default function Sidebar() {
           <span className="gcs-sidebar-stat-label">ALT</span>
           <span className="gcs-sidebar-stat-value" style={{ color: 'var(--gcs-text)' }}>
             {telemetry.alt_m.toFixed(1)}m
+          </span>
+        </div>
+        
+        {/* Branding */}
+        <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--gcs-border-h)', textAlign: 'center', opacity: 0.6 }}>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--gcs-text3)' }}>
+            BUILT BY TEAM VRITAM
           </span>
         </div>
       </div>

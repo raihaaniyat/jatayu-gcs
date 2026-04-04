@@ -18,6 +18,8 @@ class TelemetryResponse(BaseModel):
     link: str = "offline"
     ground_speed: Optional[float] = None
     climb_rate: Optional[float] = None
+    gps_sats: int = 0
+    gps_fix_type: int = 0
 
 
 class ModeRequest(BaseModel):

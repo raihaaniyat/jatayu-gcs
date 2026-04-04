@@ -11,27 +11,32 @@ log = logging.getLogger("gcs.mavlink")
 
 # ArduPlane specific mode mappings
 ARDUPLANE_MODES = {
-    "MANUAL": 0,
-    "CIRCLE": 1,
-    "STABILIZE": 2,
-    "TRAINING": 3,
-    "ACRO": 4,
-    "FLY_BY_WIRE_A": 5,
-    "FLY_BY_WIRE_B": 6,
-    "CRUISE": 7,
-    "AUTOTUNE": 8,
-    "AUTO": 10,
-    "RTL": 11,
-    "LOITER": 12,
-    "TAKEOFF": 13,
-    "AVOID_ADSB": 14,
-    "GUIDED": 15,
-    "INITIALISING": 16,
-    "QSTABILIZE": 17,
-    "QHOVER": 18,
-    "QLOITER": 19,
-    "QLAND": 20,
-    "QRTL": 21
+    "STABILIZE": 0,
+    "ACRO": 1,
+    "ALT_HOLD": 2,
+    "AUTO": 3,
+    "GUIDED": 4,
+    "LOITER": 5,
+    "RTL": 6,
+    "CIRCLE": 7,
+    "LAND": 9,
+    "DRIFT": 11,
+    "SPORT": 13,
+    "FLIP": 14,
+    "AUTOTUNE": 15,
+    "POSHOLD": 16,
+    "BRAKE": 17,
+    "THROW": 18,
+    "AVOID_ADSB": 19,
+    "GUIDED_NOGPS": 20,
+    "SMART_RTL": 21,
+    "FLOWHOLD": 22,
+    "FOLLOW": 23,
+    "ZIGZAG": 24,
+    "SYSTEMID": 25,
+    "AUTOROTATE": 26,
+    "AUTO_RTL": 27,
+    "TURTLE": 28,
 }
 
 class MavlinkService:
@@ -133,6 +138,44 @@ class MavlinkService:
             return True
         except Exception as e:
             log.error(f"Failed to send altitude command: {e}")
+            return False
+
+    def cmd_set_servo_11_max(self) -> bool:
+        """Send MAV_CMD_DO_SET_SERVO for SERVO11 at 2000 PWM and wait for ACK."""
+        if not self.master or not self.is_connected:
+            log.error("ABORT: No MAVLink link.")
+            return False
+
+        try:
+            log.info("SEND: MAV_CMD_DO_SET_SERVO (11 -> 2000)")
+            self.master.mav.command_long_send(
+                self.master.target_system,
+                self.master.target_component,
+                mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
+                0,
+                11,     # servo instance
+                2000,   # pwm
+                0, 0, 0, 0, 0
+            )
+            
+            # Wait for ACK confirmation
+            start_wait = time.time()
+            while time.time() - start_wait < 3.0:
+                ack = self.master.recv_match(type='COMMAND_ACK', blocking=False)
+                if ack and ack.command == mavutil.mavlink.MAV_CMD_DO_SET_SERVO:
+                    if ack.result == mavutil.mavlink.MAV_RESULT_ACCEPTED:
+                        log.info("ACK RECEIVED: Payload delivery confirmed (ACCEPTED)")
+                        return True
+                    else:
+                        log.error(f"ACK REJECTED: Delivery failed with result code {ack.result}")
+                        return False
+                time.sleep(0.05)
+                
+            log.warning("ACK TIMEOUT: No delivery confirmation received from ArduPilot")
+            return False
+            
+        except Exception as e:
+            log.error(f"SERVO ERROR: {e}")
             return False
 
 

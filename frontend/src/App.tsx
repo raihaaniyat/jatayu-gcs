@@ -6,6 +6,8 @@ import { Suspense, lazy, useEffect } from 'react';
 import { useMissionStore } from '@/store/missionStore';
 import { connectWebSocket } from '@/services/websocket';
 import Sidebar from '@/components/layout/Sidebar';
+import Topbar from '@/components/layout/Topbar';
+import Ticker from '@/components/layout/Ticker';
 import ActionLogPanel from '@/components/layout/ActionLogPanel';
 import { LoadingState } from '@/components/shared';
 
@@ -52,10 +54,14 @@ export default function App() {
   return (
     <div className="gcs-shell">
       <Sidebar />
-      <main className="gcs-main">
-        <Suspense fallback={<LoadingState text="Loading module..." />}>
-          <ActivePage />
-        </Suspense>
+      <main className="gcs-main" style={{ display: 'flex', flexDirection: 'column' }}>
+        <Topbar />
+        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <Suspense fallback={<LoadingState text="Loading module..." />}>
+            <ActivePage key={activeTab} />
+          </Suspense>
+        </div>
+        <Ticker />
       </main>
       <ActionLogPanel />
     </div>

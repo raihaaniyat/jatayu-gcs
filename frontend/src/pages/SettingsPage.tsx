@@ -18,14 +18,45 @@ export default function SettingsPage() {
     }
   }, [theme]);
 
+  const handleThemeToggle = (newTheme: string, e: React.MouseEvent) => {
+    if (newTheme === theme) return;
+    
+    // Fallback if browser doesn't support View Transitions
+    const transitionAPI = (document as any).startViewTransition;
+    if (!transitionAPI || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTheme(newTheme);
+      return;
+    }
+    
+    // Force origin to top-right corner as requested
+    const x = window.innerWidth;
+    const y = 0;
+    const endRadius = Math.hypot(window.innerWidth, window.innerHeight) * 1.2;
+
+    // Set origin and radius as CSS parameters for the keyframes in index.css
+    document.documentElement.style.setProperty('--spill-x', `${x}px`);
+    document.documentElement.style.setProperty('--spill-y', `${y}px`);
+    document.documentElement.style.setProperty('--spill-r', `${endRadius}px`);
+
+    transitionAPI.call(document, () => {
+       if (newTheme !== 'light') {
+         document.documentElement.setAttribute('data-theme', newTheme);
+       } else {
+         document.documentElement.removeAttribute('data-theme');
+       }
+       setTheme(newTheme);
+    });
+  };
+
   return (
-    <div className="gcs-page" style={{ maxWidth: 900, margin: '0 auto' }}>
-      <div className="gcs-page-header">
-        <div>
-          <h1 className="gcs-page-title">Settings</h1>
-          <p className="gcs-page-desc">Configure operator preferences and connection parameters</p>
+    <div className="gcs-page">
+      <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
+        <div className="gcs-page-header">
+          <div>
+            <h1 className="gcs-page-title">Settings</h1>
+            <p className="gcs-page-desc">Configure operator preferences and connection parameters</p>
+          </div>
         </div>
-      </div>
 
       <div className="gcs-stack gcs-stack-xl">
         {/* Appearance */}
@@ -39,7 +70,7 @@ export default function SettingsPage() {
               </div>
               <div style={{ display: 'flex', background: 'var(--gcs-surface)', padding: 4, borderRadius: 'var(--gcs-radius-sm)', border: '1px solid var(--gcs-border)' }}>
                 <button 
-                  onClick={() => setTheme('dark')}
+                  onClick={(e) => handleThemeToggle('dark', e)}
                   className="gcs-btn"
                   style={{ 
                     padding: '6px 12px', background: theme === 'dark' ? 'var(--gcs-card)' : 'transparent',
@@ -49,7 +80,7 @@ export default function SettingsPage() {
                   }}
                 >Dark</button>
                 <button 
-                  onClick={() => setTheme('light')}
+                  onClick={(e) => handleThemeToggle('light', e)}
                   className="gcs-btn"
                   style={{ 
                     padding: '6px 12px', background: theme === 'light' ? 'var(--gcs-card)' : 'transparent',
@@ -133,6 +164,7 @@ export default function SettingsPage() {
           <div style={{ fontSize: 11, color: 'var(--gcs-muted)', marginTop: 12 }}>Powered by React, FastAPI, ArduPilot</div>
         </section>
       </div>
+    </div>
     </div>
   );
 }

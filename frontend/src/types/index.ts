@@ -15,6 +15,8 @@ export interface Telemetry {
   climb_rate?: number;
   roll?: number;
   pitch?: number;
+  gps_sats?: number;
+  gps_fix_type?: number;
 }
 
 export interface Detection {

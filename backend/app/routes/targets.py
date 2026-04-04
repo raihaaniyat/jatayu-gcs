@@ -112,9 +112,8 @@ async def save_target(request: SaveTargetRequest):
 @router.get("/detections/active", response_model=list[Detection])
 async def get_active_detections():
     """Get currently active detections (from YOLO pipeline)."""
-    # TODO: Connect to actual YOLO pipeline
-    # For now return empty — will be populated when vision pipeline runs
-    return []
+    from app.routes.video import ACTIVE_DETECTIONS
+    return ACTIVE_DETECTIONS
 
 
 @router.get("/map/targets")

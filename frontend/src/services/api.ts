@@ -148,9 +148,28 @@ class ApiService {
     });
   }
 
-  // ── Video Stream URL ──────────────────────────────────────────────
+  // ── Video Stream & AI ──────────────────────────────────────────────
   getVideoStreamUrl(): string {
     return `${this.baseUrl}${ENDPOINTS.videoStream}`;
+  }
+
+  async getVideoStatus(): Promise<{ model_loaded: boolean, current_source: string | null, available_videos: string[] }> {
+    return this.request(ENDPOINTS.videoStatus);
+  }
+
+  async toggleVideoModel(): Promise<{ success: boolean, model_loaded: boolean, message: string }> {
+    return this.request(ENDPOINTS.videoModelToggle, { method: 'POST' });
+  }
+
+  async setVideoSource(source: string): Promise<{ success: boolean }> {
+    return this.request(ENDPOINTS.videoSource, {
+      method: 'POST',
+      body: JSON.stringify({ source }),
+    });
+  }
+
+  async deleteVideo(filename: string): Promise<{ success: boolean }> {
+    return this.request(ENDPOINTS.videoDelete(filename), { method: 'DELETE' });
   }
 }
 
