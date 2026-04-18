@@ -18,6 +18,7 @@ const SavedTargetsPage = lazy(() => import('@/pages/SavedTargetsPage'));
 const PayloadDropPage = lazy(() => import('@/pages/PayloadDropPage'));
 const RecordingsPage = lazy(() => import('@/pages/RecordingsPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const RoutePlannerPage = lazy(() => import('@/pages/RoutePlannerPage'));
 
 const PAGE_MAP: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
   'overview': OverviewPage,
@@ -27,6 +28,7 @@ const PAGE_MAP: Record<string, React.LazyExoticComponent<React.ComponentType>> =
   'payload': PayloadDropPage,
   'recordings': RecordingsPage,
   'settings': SettingsPage,
+  'route-planner': RoutePlannerPage,
 };
 
 export default function App() {
@@ -38,7 +40,7 @@ export default function App() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!e.altKey) return;
-      const tabs = ['overview', 'mission', 'tactical-map', 'targets', 'payload', 'recordings', 'settings'] as const;
+      const tabs = ['overview', 'mission', 'tactical-map', 'targets', 'payload', 'recordings', 'settings', 'route-planner'] as const;
       const idx = parseInt(e.key) - 1;
       if (idx >= 0 && idx < tabs.length) {
         e.preventDefault();

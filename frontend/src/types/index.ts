@@ -128,7 +128,8 @@ export type TabId =
   | 'targets'
   | 'payload'
   | 'recordings'
-  | 'settings';
+  | 'settings'
+  | 'route-planner';
 
 export interface NavTab {
   id: TabId;
