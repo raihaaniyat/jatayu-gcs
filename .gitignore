@@ -14,3 +14,4 @@ __pycache__/
 *.db
 *.sqlite3
 detected_targets.json
+*gcs.rar*
