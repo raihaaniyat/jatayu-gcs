@@ -19,6 +19,21 @@ export default function OverviewPage() {
 
   const [elapsed, setElapsed] = useState('00:00:00');
 
+  // Fetch browser geolocation as fallback
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const store = useMissionStore.getState();
+        const t = store.telemetry;
+        // If it's the exact placeholder coordinates, update to real browser location
+        if (t.lat === 26.25104 && t.lon === 78.17124) {
+          store.setTelemetry({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+          // Optionally also push to backend config if you had a mutation for it
+        }
+      }, () => {}, { enableHighAccuracy: true });
+    }
+  }, []);
+
   useEffect(() => {
     const poll = async () => {
       try {
@@ -30,6 +45,18 @@ export default function OverviewPage() {
     };
     poll();
     const i = setInterval(poll, 1000);
+    return () => clearInterval(i);
+  }, []);
+
+  // Periodically refresh saved targets, recordings, and detections
+  useEffect(() => {
+    const refresh = async () => {
+      try { useMissionStore.getState().fetchSavedTargets(); } catch {}
+      try { const r = await api.getRecordings(); useMissionStore.getState().setRecordings(r); } catch {}
+      try { const d = await api.getActiveDetections(); useMissionStore.getState().setDetections(d); } catch {}
+    };
+    refresh();
+    const i = setInterval(refresh, 3000);
     return () => clearInterval(i);
   }, []);
 
@@ -58,7 +85,9 @@ export default function OverviewPage() {
   
   const handleAlt = async (delta: number) => {
     try {
-      await api.setDroneAltitude(Math.max(0, telemetry.alt_m + delta));
+      const newAlt = Math.max(0, telemetry.alt_m + delta);
+      useMissionStore.getState().setTelemetry({ alt_m: newAlt });
+      await api.setDroneAltitude(newAlt);
     } catch {}
   };
 
@@ -157,7 +186,7 @@ export default function OverviewPage() {
               {systemStatus.model_loaded ? 'Running' : 'Not Loaded'}
             </span>
           </div>
-          <div className="ov-card-sub" style={{ marginTop: '5px' }}>YOLOv8m · BoTSORT</div>
+          <div className="ov-card-sub" style={{ marginTop: '5px' }}>yolo26n-pose · Track</div>
         </div>
         <div className="ov-card ov-card-sm">
           <div className="ov-card-label">Recording</div>
@@ -231,7 +260,7 @@ export default function OverviewPage() {
           <div className="video-bottom" style={{ background: 'var(--gcs-surface2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span className="ov-badge b-dim">MJPEG STREAMING</span>
-              <span className="ov-badge b-dim">YOLOv8s ENABLED</span>
+              <span className="ov-badge b-dim">YOLO26n-POSE</span>
             </div>
             <div style={{ display: 'flex', gap: '5px' }}>
               <div style={{ fontSize: '10px', color: 'var(--gcs-text3)', fontFamily: "'IBM Plex Mono', monospace" }}>GSC-M-LINK-01</div>

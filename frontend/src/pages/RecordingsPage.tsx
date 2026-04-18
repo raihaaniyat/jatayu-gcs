@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useMissionStore } from '@/store/missionStore';
 import { api } from '@/services/api';
+import { API_CONFIG } from '@/config/api';
 import { MetricCard, SectionHeader, StatusBadge, EmptyState } from '@/components/shared';
 
 export default function RecordingsPage() {
@@ -126,7 +127,15 @@ export default function RecordingsPage() {
                         />
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button className="gcs-btn gcs-btn-ghost" style={{ padding: '6px 10px', fontSize: 11 }}>Download</button>
+                        <a 
+                          href={`${API_CONFIG.BASE_URL}/api/recordings/play/${r.filename}`}
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="gcs-btn gcs-btn-ghost" 
+                          style={{ padding: '6px 10px', fontSize: 11, textDecoration: 'none', display: 'inline-block' }}
+                        >
+                          ▶ Play
+                        </a>
                       </td>
                     </tr>
                   ))}

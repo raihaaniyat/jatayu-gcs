@@ -4,6 +4,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useMissionStore } from '@/store/missionStore';
+import { api } from '@/services/api';
 import { StatusBadge, SectionHeader, EmptyState } from '@/components/shared';
 import type { SavedTarget } from '@/types';
 
@@ -15,7 +16,16 @@ export default function SavedTargetsPage() {
 
   useEffect(() => {
     fetchSavedTargets();
+    const i = setInterval(fetchSavedTargets, 3000);
+    return () => clearInterval(i);
   }, [fetchSavedTargets]);
+
+  const handleClearAll = async () => {
+    try {
+      await fetch(`${(api as any).baseUrl || 'http://localhost:8080'}/api/targets`, { method: 'DELETE' });
+      useMissionStore.getState().setSavedTargets([]);
+    } catch {}
+  };
 
   const filteredTargets = useMemo(() => {
     return targets.filter(t => 
@@ -43,6 +53,9 @@ export default function SavedTargetsPage() {
               style={{ width: 240, paddingLeft: 36 }}
             />
           </div>
+          <button className="gcs-btn gcs-btn-danger" style={{ padding: '8px 16px', fontSize: 12 }} onClick={handleClearAll}>
+            Clear All
+          </button>
         </div>
       </div>
 
