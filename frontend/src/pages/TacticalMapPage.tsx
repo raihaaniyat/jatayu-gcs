@@ -47,9 +47,11 @@ export default function TacticalMapPage() {
   
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
 
-  // Initial load
+  // Initial load + periodic refresh
   useEffect(() => {
     fetchMapTargets();
+    const i = setInterval(fetchMapTargets, 5000);
+    return () => clearInterval(i);
   }, [fetchMapTargets]);
 
   // Init map
@@ -61,7 +63,7 @@ export default function TacticalMapPage() {
       leafletMap.current = L.map(mapRef.current, {
         zoomControl: false,
         attributionControl: false,
-      }).setView([26.2306, 78.2070], 16);
+      }).setView([useMissionStore.getState().telemetry.lat || 26.25104, useMissionStore.getState().telemetry.lon || 78.17124], 16);
       
       L.control.zoom({ position: 'bottomright' }).addTo(leafletMap.current);
       
@@ -103,8 +105,8 @@ export default function TacticalMapPage() {
     targetLayer.current.clearLayers();
     
     // Draw Operator Marker (Ground Station)
-    const opLat = 26.2306;
-    const opLon = 78.2070;
+    const opLat = telemetry.lat || 26.25104;
+    const opLon = telemetry.lon || 78.17124;
     const gcsIcon = L.divIcon({
       className: 'custom-div-icon',
       html: `<div style="background-color: #8b5cf6; width: 14px; height: 14px; border-radius: 2px; border: 2px solid #fff; box-shadow: 0 0 8px #8b5cf6, 0 0 4px rgba(0,0,0,0.5);"></div>`,
