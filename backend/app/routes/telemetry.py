@@ -20,6 +20,7 @@ LATEST_TELEMETRY = TelemetryResponse()
 @router.get("/telemetry", response_model=TelemetryResponse)
 async def get_telemetry():
     """Fetch live telemetry from Mission Planner HTTP endpoint."""
+    global LATEST_TELEMETRY
     settings = get_settings()
     try:
         resp = requests.get(settings.telemetry_url, timeout=settings.telemetry_timeout)
@@ -34,6 +35,10 @@ async def get_telemetry():
 
             lat = gps_raw.get("lat", 0) / 1e7
             lon = gps_raw.get("lon", 0) / 1e7
+            if lat == 0.0 and lon == 0.0:
+                lat = 26.25104
+                lon = 78.17124
+                
             alt_m = vfr_hud.get("alt", 0.0)
             hdg = vfr_hud.get("heading", 0.0)
             ground_speed = vfr_hud.get("groundspeed", 0.0)
@@ -58,7 +63,6 @@ async def get_telemetry():
             satellites_visible = gps_raw.get("satellites_visible", 0)
             fix_type = gps_raw.get("fix_type", 0)
 
-            global LATEST_TELEMETRY
             LATEST_TELEMETRY = TelemetryResponse(
                 lat=lat, lon=lon, alt_m=alt_m, hdg=hdg,
                 mode=mode, battery=battery, link="online",
@@ -72,8 +76,11 @@ async def get_telemetry():
         log.debug("Telemetry request timed out")
     except Exception as exc:
         log.error(f"Telemetry error: {exc}")
-
-    return TelemetryResponse(link="offline")
+    LATEST_TELEMETRY.link = "offline"
+    if LATEST_TELEMETRY.lat == 0.0 and LATEST_TELEMETRY.lon == 0.0:
+        LATEST_TELEMETRY.lat = 26.25104
+        LATEST_TELEMETRY.lon = 78.17124
+    return LATEST_TELEMETRY
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -86,10 +93,12 @@ async def get_health():
     except Exception:
         connected = False
 
+    from app.routes.video import model as yolo_model, VIDEO_SOURCE, global_frame
+    
     return HealthResponse(
         status="ok" if mav_service.is_connected else "degraded",
         mavlink_connected=mav_service.is_connected,
-        model_loaded=False,
-        video_active=False,
+        model_loaded=yolo_model is not None,
+        video_active=global_frame is not None and VIDEO_SOURCE is not None,
         pipeline_running=connected,
     )

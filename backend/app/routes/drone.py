@@ -46,6 +46,10 @@ async def set_altitude(request: AltitudeRequest):
     # Send via MAVLink guided command
     success = mav_service.set_altitude(request.altitude_m)
     
+    # Update local global telemetry variable to spoof changes if offline
+    from app.routes.telemetry import LATEST_TELEMETRY
+    LATEST_TELEMETRY.alt_m = request.altitude_m
+    
     if success:
         return {"success": True, "message": f"Altitude set to {request.altitude_m}m"}
     else:
