@@ -7,7 +7,9 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import telemetry, drone, targets, recordings, payload, actions, video
+from app.routes import telemetry, drone, targets, recordings, payload, actions, video, route_planner
+from fastapi.staticfiles import StaticFiles
+import os
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("gcs")
@@ -61,6 +63,11 @@ def create_app() -> FastAPI:
     app.include_router(payload.router, prefix="/api", tags=["Payload"])
     app.include_router(actions.router, prefix="/api", tags=["Actions"])
     app.include_router(video.router, prefix="/api", tags=["Video"])
+    app.include_router(route_planner.router, prefix="/api", tags=["Route Planner"])
+    
+    REC_DIR = os.path.join(os.getcwd(), "recordings")
+    os.makedirs(REC_DIR, exist_ok=True)
+    app.mount("/api/recordings/play", StaticFiles(directory=REC_DIR), name="recordings_play")
 
     @app.get("/")
     async def root():
