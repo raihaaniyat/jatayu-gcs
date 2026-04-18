@@ -9,8 +9,8 @@ from datetime import datetime
 
 
 class TelemetryResponse(BaseModel):
-    lat: float = 0.0
-    lon: float = 0.0
+    lat: float = 26.25104
+    lon: float = 78.17124
     alt_m: float = 0.0
     hdg: float = 0.0
     mode: str = "UNKNOWN"
