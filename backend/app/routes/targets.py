@@ -108,12 +108,21 @@ async def save_target(request: SaveTargetRequest):
         status=entry["status"],
     )
 
-
 @router.get("/detections/active", response_model=list[Detection])
 async def get_active_detections():
     """Get currently active detections (from YOLO pipeline)."""
     from app.routes.video import ACTIVE_DETECTIONS
     return ACTIVE_DETECTIONS
+
+
+@router.delete("/targets")
+async def clear_targets():
+    """Clear all saved targets."""
+    _write_db([])
+    from app.routes.video import SAVED_TRACK_IDS
+    SAVED_TRACK_IDS.clear()
+    log.info("All targets cleared.")
+    return {"success": True, "message": "All targets cleared"}
 
 
 @router.get("/map/targets")
@@ -156,8 +165,8 @@ def calculate_slant_range(lat1, lon1, alt1, lat2, lon2, alt2):
 
 @router.get("/map/routes")
 async def get_map_routes(
-    op_lat: float = 26.2306, 
-    op_lon: float = 78.2070, 
+    op_lat: float = 26.25104, 
+    op_lon: float = 78.17124, 
     op_alt: float = 0.0,
     drone_lat: float = None,
     drone_lon: float = None,

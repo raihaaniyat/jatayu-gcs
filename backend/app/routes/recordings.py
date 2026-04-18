@@ -43,7 +43,7 @@ async def stop_recording():
 @router.get("/recordings", response_model=list[Recording])
 async def get_recordings():
     """List all recordings from disk."""
-    files = glob.glob(os.path.join(REC_DIR, "*.mp4"))
+    files = glob.glob(os.path.join(REC_DIR, "*.webm"))
     recs = []
     for f in files:
         fname = os.path.basename(f)

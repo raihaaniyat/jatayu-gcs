@@ -14,6 +14,16 @@ from fastapi.responses import StreamingResponse
 from ultralytics import YOLO
 from pydantic import BaseModel
 
+try:
+    from pygrabber.dshow_graph import FilterGraph
+except ImportError:
+    FilterGraph = None
+
+try:
+    import pythoncom
+except ImportError:
+    pythoncom = None
+
 router = APIRouter()
 log = logging.getLogger("gcs.video")
 
@@ -47,6 +57,72 @@ async def get_video_status():
         "available_videos": videos
     }
 
+
+def detect_cameras():
+    """Detect available cameras using pygrabber for names, with DirectShow fallback.
+    Ported from the proven Flask FOD detection script."""
+    cameras = []
+
+    # Try pygrabber first for friendly device names
+    if FilterGraph and pythoncom:
+        try:
+            pythoncom.CoInitialize()
+            graph = FilterGraph()
+            devices = graph.get_input_devices()
+            for i, name in enumerate(devices):
+                cameras.append({"index": i, "name": name})
+
+            if cameras:
+                log.info(f"Pygrabber detected {len(cameras)} camera(s): {[c['name'] for c in cameras]}")
+                return cameras
+        except Exception as e:
+            log.warning(f"Pygrabber detection failed: {e}")
+        finally:
+            try:
+                pythoncom.CoUninitialize()
+            except Exception:
+                pass
+
+    # Fallback to legacy detection via DirectShow probing
+    log.info("Falling back to legacy camera detection (DirectShow probe)...")
+    prioritized_backends = [cv2.CAP_DSHOW]
+
+    for i in range(5):
+        detected = False
+        for backend in prioritized_backends:
+            try:
+                cap = cv2.VideoCapture(i, backend)
+                if cap.isOpened():
+                    backend_name = "DirectShow" if backend == cv2.CAP_DSHOW else "Unknown"
+                    cameras.append({"index": i, "name": f"Camera {i} ({backend_name})"})
+                    cap.release()
+                    detected = True
+                    break
+            except Exception:
+                continue
+
+        if not detected:
+            try:
+                cap = cv2.VideoCapture(i, cv2.CAP_ANY)
+                if cap.isOpened():
+                    cameras.append({"index": i, "name": f"Camera {i} (Standard)"})
+                    cap.release()
+            except Exception:
+                pass
+
+    if not cameras:
+        cameras = [{"index": 0, "name": "Default Camera"}]
+
+    log.info(f"Legacy detection found {len(cameras)} camera(s)")
+    return cameras
+
+
+@router.get("/video/cameras")
+async def get_cameras():
+    """Returns a list of detected camera devices with index and friendly name."""
+    cams = detect_cameras()
+    return cams
+
 @router.post("/video/model/toggle")
 async def toggle_model():
     """Loads or unloads the YOLO model."""
@@ -57,7 +133,7 @@ async def toggle_model():
         return {"success": True, "message": "Model unloaded", "model_loaded": False}
     else:
         try:
-            log.info("Loading YOLO model bestyolov8s.pt...")
+            log.info("Loading YOLO model yolo26n-pose.pt...")
             model = YOLO("bestyolov8s.pt")
             return {"success": True, "message": "Model loaded", "model_loaded": True}
         except Exception as e:
@@ -127,7 +203,8 @@ async def delete_video(filename: str):
 global_frame = None
 
 def run_video_loop():
-    """Background thread that reads the active video source, resizes to 640px, runs YOLO, and saves MJPEG frames."""
+    """Background thread that reads the active video source, resizes to 640px, runs YOLO, and saves MJPEG frames.
+    Camera opening logic ported from the proven Flask FOD script — tries DirectShow first for speed."""
     global VIDEO_SOURCE, model, is_recording, record_writer, global_frame
     cap = None
     last_source = -999 # force update
@@ -140,9 +217,31 @@ def run_video_loop():
                     cap.release()
                 
                 if VIDEO_SOURCE is not None:
-                    cap = cv2.VideoCapture(VIDEO_SOURCE)
-                    if not cap.isOpened() and isinstance(VIDEO_SOURCE, int):
+                    if isinstance(VIDEO_SOURCE, int):
+                        # Camera index — try DirectShow first (much faster on Windows)
+                        log.info(f"Opening camera {VIDEO_SOURCE} with DirectShow...")
                         cap = cv2.VideoCapture(VIDEO_SOURCE, cv2.CAP_DSHOW)
+                        backend_used = "DirectShow"
+                        
+                        if not cap.isOpened():
+                            log.info(f"DirectShow failed, trying default backend for camera {VIDEO_SOURCE}...")
+                            cap = cv2.VideoCapture(VIDEO_SOURCE)
+                            backend_used = "Default"
+                        
+                        if cap.isOpened():
+                            # Set resolution and FPS like the working Flask script
+                            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                            cap.set(cv2.CAP_PROP_FPS, 30)
+                            log.info(f"Camera {VIDEO_SOURCE} opened successfully using {backend_used}")
+                        else:
+                            log.error(f"Failed to open camera {VIDEO_SOURCE} with any backend")
+                    else:
+                        # File path — try default then FFMPEG
+                        cap = cv2.VideoCapture(VIDEO_SOURCE)
+                        if not cap.isOpened():
+                            cap = cv2.VideoCapture(VIDEO_SOURCE, cv2.CAP_FFMPEG)
+                    
                     last_source = VIDEO_SOURCE
                 else:
                     last_source = VIDEO_SOURCE
@@ -172,11 +271,10 @@ def run_video_loop():
 
             # ── AI INFERENCE ───────────────────────────────────────────────────────
             if model is not None:
-                # Optimized params: low imgsz, persistent tracking, filtered for persons (0)
+                # Optimized params: low imgsz, persistent tracking, filtered for persons
                 results = model.track(
                     source=frame, 
                     persist=True, 
-                    classes=[0], 
                     conf=0.35,      # Confidence threshold
                     iou=0.45,       # Intersection over Union (suppress duplicates)
                     imgsz=640,      # Explicitly set inference size
@@ -190,11 +288,31 @@ def run_video_loop():
                     from app.routes.targets import _read_db, _write_db
                     from app.models import Detection
                     
-                    for box in results[0].boxes:
+                    for i, box in enumerate(results[0].boxes):
                         track_id = int(box.id[0].item()) if box.id is not None else 0
                         conf = float(box.conf[0].item())
                         xyxy = box.xyxy[0].tolist() 
                         
+                        # Determine pose mapping — only standing or unknown
+                        bbox_h = xyxy[3] - xyxy[1]
+                        bbox_w = xyxy[2] - xyxy[0]
+                        pose_val = "unknown"
+                        
+                        # Standing = tall bounding box
+                        if bbox_h > bbox_w * 1.2:
+                            pose_val = "standing"
+                            
+                        # Refine with keypoints if available
+                        if pose_val == "standing" and results[0].keypoints is not None and len(results[0].keypoints.xy) > i:
+                            kpts = results[0].keypoints.xy[i]
+                            if len(kpts) > 14:
+                                s_y = (float(kpts[5][1]) + float(kpts[6][1])) / 2
+                                h_y = (float(kpts[11][1]) + float(kpts[12][1])) / 2
+                                k_y = (float(kpts[13][1]) + float(kpts[14][1])) / 2
+                                if s_y > 0 and h_y > s_y and k_y > 0:
+                                    if (k_y - h_y) < (h_y - s_y) * 0.5:
+                                        pose_val = "unknown"
+
                         # Generate random severity based on confidence
                         severity = min(10, max(1, int(conf * 10) + 1))
                         
@@ -202,7 +320,7 @@ def run_video_loop():
                             id=f"TRK-{track_id}",
                             bbox=xyxy,
                             confidence=conf,
-                            pose="unknown",
+                            pose=pose_val,
                             severity=severity,
                             gps_lat=LATEST_TELEMETRY.lat,  
                             gps_lon=LATEST_TELEMETRY.lon
@@ -233,15 +351,22 @@ def run_video_loop():
                 global ACTIVE_DETECTIONS
                 ACTIVE_DETECTIONS = current_detections
                 
-                # Draw professional labels (thinner lines, clearer fonts)
-                frame = results[0].plot(line_width=2, font_size=10, labels=True, boxes=True)
+                # Draw extremely minimal lines (hide big labels, thin boxes)
+                frame = results[0].plot(line_width=1, labels=False, boxes=True, kpt_radius=2)
+                
+                # Drop custom light pose text 
+                for det in current_detections:
+                    if det.bbox:
+                        x1, y1 = int(det.bbox[0]), int(det.bbox[1])
+                        cv2.putText(frame, det.pose.upper(), (x1, max(15, y1 - 8)), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
 
             # ── RECORDING ENGINE ──────────────────────────────────────────────────
             if is_recording:
                 if record_writer is None:
-                    filename = f"mission_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+                    filename = f"mission_{datetime.now().strftime('%Y%m%d_%H%M%S')}.webm"
                     save_path = os.path.join(REC_DIR, filename)
-                    fourcc = cv2.VideoWriter_fourcc(*'mp4v') # h264 or mp4v
+                    fourcc = cv2.VideoWriter_fourcc(*'VP80') # webm encoded
                     # We record at 640px based on our optimization
                     record_writer = cv2.VideoWriter(save_path, fourcc, 20.0, (640, frame.shape[0]))
                     log.info(f"Started writing recording: {filename}")
