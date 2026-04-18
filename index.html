@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>End-to-End Robotic Perception, Manipulation & LiDAR-Based SLAM using ROS 2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Serif+4:wght@600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#F2F4FA;
+  --surface:#FFFFFF;
+  --surface2:#ECEEF8;
+  --navy:#0C1B40;
+  --blue:#1557A0;
+  --blue2:#1976D2;
+  --sky:#1E88E5;
+  --green:#1B5E20;
+  --green2:#2E7D32;
+  --teal:#00695C;
+  --amber:#E65100;
+  --amber2:#F57C00;
+  --red:#B71C1C;
+  --purple:#4A148C;
+  --indigo:#1A237E;
+  --indigo2:#283593;
+  --text:#111827;
+  --text2:#374151;
+  --muted:#6B7280;
+  --light:#9CA3AF;
+  --border:#CBD5E1;
+  --border2:#94A3B8;
+}
+html,body{width:100%;min-height:100vh;overflow-x:hidden;overflow-y:auto;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:11px;line-height:1.5;}
+.poster{width:100%;min-height:100vh;display:grid;grid-template-rows:max-content 1fr;}
+
+/* ── HEADER ── */
+header{
+  background:linear-gradient(90deg,#0d0d1a 0%,#1a1a2e 30%,#16213e 60%,#0f3460 100%);
+  border-bottom:3px solid #7c83ff;
+  display:grid;grid-template-columns:minmax(200px,1fr) minmax(380px,2fr) minmax(220px,1fr);align-items:center;padding:12px 16px 14px;gap:14px;
+}
+.h-titles{display:flex;justify-content:center;align-items:center;text-align:center;}
+.h-title{font-family:'DM Serif Display',serif;font-size:19px;font-weight:400;color:#FFFFFF;line-height:1.05;letter-spacing:0.15px;max-width:760px;margin:0 auto;text-align:center;}
+.h-title .accent{color:#b8bbff;font-style:italic;}
+.h-uni{display:flex;align-items:center;gap:9px;min-width:220px;padding:5px 10px;text-align:left;}
+.h-team{justify-self:start;min-width:0;width:max-content;padding:5px 8px 5px 6px;gap:7px;}
+.h-uni img{width:28px;height:28px;object-fit:contain;border-radius:4px;background:#fff;padding:2px;flex-shrink:0;}
+.h-uni .u-name{display:block;font-size:10px;color:#fff;font-weight:600;line-height:1.2;}
+.h-uni .u-sub{display:block;font-size:8px;color:#c5cae9;line-height:1.15;}
+.h-badge{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.22);border-radius:5px;padding:4px 12px;text-align:center;flex-shrink:0;}
+
+/* ── TEAM VRITAM HEADER TRIGGER + MODAL CONTENT ── */
+.h-team-trigger{cursor:pointer;border-radius:6px;transition:background .15s,box-shadow .15s;}
+.h-team-trigger:hover{background:rgba(255,255,255,0.14);box-shadow:0 0 0 2px rgba(255,255,255,0.32);}
+.h-team-trigger:focus{outline:none;}
+.h-team-trigger:focus-visible{background:rgba(255,255,255,0.14);box-shadow:0 0 0 2px rgba(200,203,255,0.85);}
+.vritam-team-modal-inner{display:flex;gap:18px;align-items:flex-start;}
+.vritam-team-modal-logo{width:72px;height:72px;object-fit:contain;border-radius:10px;background:#fff;padding:6px;flex-shrink:0;border:1px solid var(--border);}
+.vritam-team-modal-copy{flex:1;min-width:0;}
+.vritam-team-modal-desc{margin:0 0 16px;font-size:15.5px;line-height:1.6;color:var(--text2);}
+.vritam-team-modal-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;background:var(--indigo);color:#fff;border-radius:10px;font-weight:600;text-decoration:none;font-size:14px;transition:opacity .15s,transform .12s;}
+.vritam-team-modal-btn:hover{opacity:0.92;}
+.vritam-team-modal-btn:focus-visible{outline:2px solid var(--indigo);outline-offset:2px;}
+
+/* ── BODY ── */
+.body{display:grid;grid-template-columns:1fr 1.15fr 1fr;overflow:visible;}
+.col{padding:7px 9px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:7px;overflow:visible;}
+.col:last-child{border-right:none;}
+
+/* ── SECTION ── */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
+.sec-h{
+  display:flex;align-items:center;justify-content:center;gap:0;
+  padding:5px 8px;border-bottom:1px solid var(--border);
+}
+.sec-h.r{background:#FEE2E2;border-bottom-color:#FECACA;}
+.sec-h.b{background:#DBEAFE;border-bottom-color:#BFDBFE;}
+.sec-h.g{background:#DCFCE7;border-bottom-color:#BBF7D0;}
+.sec-h.o{background:#FEF3C7;border-bottom-color:#FDE68A;}
+.sec-h.t{background:#CCFBF1;border-bottom-color:#99F6E4;}
+.sec-h.p{background:#EDE9FE;border-bottom-color:#DDD6FE;}
+.sec-h.d{background:var(--surface2);border-bottom-color:var(--border);}
+.sec-h.i{background:#E8EAF6;border-bottom-color:#C5CAE9;}
+.sec-label{
+  font-size:9px;font-weight:700;letter-spacing:0.9px;text-transform:uppercase;
+  color:var(--navy);font-family:'Inter',sans-serif;text-align:center;
+}
+.sec-b{padding:6px 9px;}
+
+/* ── TYPOGRAPHY ── */
+p{font-size:10.5px;color:var(--text2);line-height:1.55;margin-bottom:3px;}
+p:last-child{margin-bottom:0;}
+.hi{color:var(--blue);font-weight:600;}
+.dn{color:var(--red);font-weight:600;}
+.ok{color:var(--green2);font-weight:600;}
+.am{color:var(--amber);font-weight:600;}
+.ind{color:var(--indigo);font-weight:600;}
+.pur{color:var(--purple);font-weight:600;}
+
+/* ── STATS ── */
+.stats{display:flex;gap:0;flex-shrink:0;}
+.st{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:5px 5px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+.st-v{font-family:'Source Serif 4',serif;font-size:15px;line-height:1.1;font-weight:700;}
+.st-l{font-size:8.5px;color:var(--muted);margin-top:2px;line-height:1.35;}
+
+/* ── FEATURE LIST ── */
+.fl{list-style:none;}
+.fl li{display:flex;align-items:flex-start;gap:6px;padding:3px 0;border-bottom:1px solid #F1F5F9;font-size:10.5px;color:var(--text2);}
+.fl li:last-child{border-bottom:none;}
+.dot{width:5px;height:5px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.ds{background:var(--sky);}  .dg{background:var(--green2);} .dt{background:var(--teal);}
+.do{background:var(--amber2);} .dp{background:var(--purple);} .dr{background:var(--red);}
+.di{background:var(--indigo);}
+
+/* ── VIDEO SLOT ── */
+.video-slot{background:#0d0d1a;border:1.5px solid #313152;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.video-slot video{width:100%;height:100%;object-fit:contain;background-color:#000;border-radius:5px;display:block;}
+.video-slot .sl{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#fff;padding:2px 8px;border-radius:3px;font-size:7.5px;letter-spacing:0.4px;z-index:2;white-space:nowrap;pointer-events:none;}
+.video-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 8px;}
+.video-placeholder .vp-icon{width:32px;height:32px;border-radius:50%;background:rgba(124,131,255,0.15);border:1.5px solid rgba(124,131,255,0.4);display:flex;align-items:center;justify-content:center;font-size:14px;color:#7c83ff;}
+.video-placeholder .vp-label{font-size:8px;color:#9CA3AF;text-align:center;font-family:'JetBrains Mono',monospace;letter-spacing:0.3px;line-height:1.4;}
+.video-placeholder .vp-tag{font-size:7px;color:#7c83ff;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+
+/* ── SYSTEM TAGS ── */
+.sys-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.sys-tag{padding:3px 8px;border-radius:4px;font-size:9px;font-weight:600;background:#E8EAF6;border:1px solid #C5CAE9;color:var(--indigo);font-family:'JetBrains Mono',monospace;letter-spacing:0.3px;}
+.sys-tag.teal{background:#F0FDFA;border-color:#5EEAD4;color:var(--teal);}
+.sys-tag.purple{background:#F5F3FF;border-color:#C4B5FD;color:var(--purple);}
+.sys-tag.green{background:#F0FDF4;border-color:#86EFAC;color:var(--green2);}
+.sys-tag.amber{background:#FFFBEB;border-color:#FCD34D;color:var(--amber);}
+
+/* ── PILLS ── */
+.pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+.pill{padding:2px 7px;border-radius:20px;font-size:8px;font-family:'JetBrains Mono',monospace;border:1px solid;}
+.pb{border-color:#93C5FD;color:var(--blue);background:#EFF6FF;}
+.pg{border-color:#86EFAC;color:var(--green2);background:#F0FDF4;}
+.pt{border-color:#5EEAD4;color:var(--teal);background:#F0FDFA;}
+.po{border-color:#FCD34D;color:var(--amber);background:#FFFBEB;}
+.pp{border-color:#C4B5FD;color:var(--purple);background:#F5F3FF;}
+.pi{border-color:#C5CAE9;color:var(--indigo);background:#E8EAF6;}
+
+/* ── ACHIEVEMENTS ── */
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.ach{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 7px;}
+.ach-v{font-family:'Source Serif 4',serif;font-size:17px;line-height:1;font-weight:700;}
+.ach-d{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.35;}
+
+/* ── SECTION ZOOM MODAL ── */
+.sec.zoomable{cursor:zoom-in;transition:box-shadow .18s,transform .18s;}
+.sec.zoomable:hover{box-shadow:0 4px 16px rgba(26,35,126,0.13);transform:translateY(-1px);}
+.sec.zoomable .sec-h::after{
+  content:'⊕';font-size:10px;color:var(--indigo);opacity:0.5;margin-left:6px;font-style:normal;flex-shrink:0;
+}
+.sec-modal{
+  position:fixed;inset:0;background:rgba(8,10,27,.55);
+  display:none;align-items:center;justify-content:center;
+  padding:24px;z-index:9999;backdrop-filter:blur(5px);
+}
+.sec-modal.open{display:flex;}
+.sec-card{
+  width:min(640px,94vw);max-height:88vh;overflow-y:auto;background:#fff;
+  border:1px solid #D6E0ED;border-radius:16px;box-shadow:0 28px 64px rgba(0,0,0,.22);position:relative;
+}
+.sec-card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px 12px;border-bottom:1px solid var(--border);
+  position:sticky;top:0;background:#fff;z-index:2;border-radius:16px 16px 0 0;
+}
+.sec-card-title{font-family:'Source Serif 4',serif;font-size:18px;font-weight:700;color:var(--navy);line-height:1.15;}
+.sec-card-close{
+  width:32px;height:32px;border:none;border-radius:50%;background:#F1F5F9;color:var(--navy);font-size:20px;
+  line-height:1;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+}
+.sec-card-body{padding:20px 24px 24px;font-size:15.5px;color:var(--text2);line-height:1.7;}
+.sec-card-body > div[style*="flex"]{flex-direction:column !important;gap:16px !important;align-items:center !important;}
+.sec-card-body p{font-size:15.5px;line-height:1.7;color:var(--text2);}
+.sec-card-body .fl li{font-size:15.5px;padding:6px 0;line-height:1.65;}
+.sec-card-body .sys-tag{font-size:12.5px;padding:5px 12px;}
+.sec-card-body .ach-v{font-size:30px;}
+.sec-card-body .ach-d{font-size:13.5px;line-height:1.5;}
+.sec-card-body .dot{width:8px;height:8px;margin-top:6px;}
+.sec-card-body .st-v{font-size:32px;}
+.sec-card-body .st-l{font-size:13.5px;}
+.sec-card-body .stats{gap:12px;margin-bottom:8px;}
+.sec-card-body .st{padding:12px 10px;}
+.sec-card-body .pill{font-size:11px;padding:4px 10px;}
+.sec-card-body .ach-grid{gap:12px;margin-bottom:12px;}
+.sec-card-body .ach{padding:10px 12px;}
+
+/* ── DEMO LABEL STRIPE ── */
+.demo-stripe{
+  background:linear-gradient(90deg,var(--indigo),#283593);
+  color:#fff;font-size:8px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;
+  padding:4px 10px;text-align:center;font-family:'JetBrains Mono',monospace;
+}
+.demo-stripe.purple-stripe{background:linear-gradient(90deg,#4A148C,#6A1B9A);}
+
+/* ── LARGE DESKTOP ── */
+@media (min-width:1440px) and (min-height:850px){
+  html,body{font-size:13px;}
+  header{padding:14px 24px 16px;}
+  .h-title{font-size:21px;max-width:none;white-space:nowrap;}
+  .h-uni .u-name{font-size:12px;}
+  .h-uni .u-sub{font-size:10px;}
+  .col{padding:10px 14px;gap:10px;}
+  .sec-h{padding:7px 10px;}
+  .sec-label{font-size:11px;}
+  .sec-b{padding:9px 12px;}
+  p,.fl li{font-size:13px;}
+  .sys-tag{font-size:11px;padding:4px 10px;}
+  .pill{font-size:10px;padding:3px 9px;}
+  .st-v{font-size:20px;}
+  .st-l{font-size:11px;}
+  .ach-v{font-size:22px;}
+  .ach-d{font-size:11.5px;}
+  .dot{width:6px;height:6px;margin-top:5px;}
+}
+
+/* ── MOBILE ── */
+@media (max-width:980px){
+  html,body{width:100%;height:auto;overflow:auto;font-size:13px;}
+  .poster{display:block;}
+  header{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:14px 12px;border-bottom:2px solid #7c83ff;}
+  .h-badge,.h-uni,.h-team{width:100%;max-width:none;min-width:0;}
+  .h-team{order:1;justify-content:center;}
+  .h-titles{order:2;display:block;}
+  .h-title{font-size:28px;line-height:1.08;max-width:none;padding:2px 4px;}
+  header>.h-badge.h-uni[style]{order:3;justify-content:center !important;text-align:center;}
+  header>.h-badge.h-uni[style] div,.h-team div{text-align:center;}
+  .body{display:flex;flex-direction:column;}
+  .col{padding:10px 12px;border-right:none;border-bottom:1px solid var(--border);gap:10px;}
+  .col:last-child{border-bottom:none;}
+  .sec{border-radius:10px;}
+  .sec-h{padding:8px 10px;}
+  .sec-label{font-size:11px;letter-spacing:0.8px;}
+  .sec-b{padding:10px 11px;}
+  p,.fl li{font-size:13px;line-height:1.6;}
+  .stats{gap:8px;flex-direction:column;}
+  .st{padding:9px 8px;}
+  .st-v{font-size:28px;}
+  .st-l{font-size:11px;}
+  .ach-grid{grid-template-columns:1fr;gap:8px;}
+  .ach{padding:9px 10px;}
+  .ach-v{font-size:22px;}
+  .ach-d{font-size:11.5px;line-height:1.5;}
+  .sys-tag{font-size:10px;padding:4px 9px;}
+}
+@media (max-width:640px){
+  html,body{font-size:14px;}
+  header{padding:12px 10px;gap:8px;}
+  .h-title{font-size:22px;line-height:1.12;}
+  .h-uni img{width:24px;height:24px;}
+  .h-uni{padding:7px 9px;gap:8px;}
+  .h-uni .u-name{font-size:11px;}
+  .h-uni .u-sub{font-size:8.5px;}
+  .col{padding:9px 10px;gap:9px;}
+  .sec-h{padding:7px 9px;}
+  .sec-label{font-size:10.5px;}
+  .sec-b{padding:9px 10px;}
+  p,.fl li{font-size:12.5px;line-height:1.58;}
+  .st-v{font-size:24px;}
+  .st-l{font-size:10px;}
+}
+</style>
+</head>
+<body>
+<div class="poster">
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="h-badge h-uni h-team h-team-trigger" id="vritamTeamTrigger" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="vritamTeamModal" aria-label="Open Team Vritam details">
+    <img src="Vritam.png" alt="" aria-hidden="true">
+    <div>
+      <span class="u-name">Team Vritam</span>
+      <span class="u-sub">Research and Innovation Team</span>
+    </div>
+  </div>
+  <div class="h-titles">
+    <div class="h-title">End-to-End Robotic Perception, <span class="accent">Manipulation</span> &amp; LiDAR-Based <span class="accent">SLAM</span> using ROS 2</div>
+  </div>
+  <div class="h-badge h-uni" style="justify-self:end;">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRB2V_EFDc44vPTLQ3ilBFCVJy6ii11Btq-Wg&s" alt="MITS-DU logo">
+    <div>
+      <span class="u-name">MITS-DU Gwalior</span>
+      <span class="u-sub">Madhav Institute of Technology and Science</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══ BODY ══ -->
+<div class="body">
+
+<!-- ═══════ COL 1 - PROJECT FOUNDATION ═══════ -->
+<div class="col">
+
+  <!-- What We Built -->
+  <div class="sec">
+    <div class="sec-h i"><span class="sec-label">What We Built</span></div>
+    <div class="sec-b">
+      <p>
+        An <span class="hi">end-to-end robotics platform</span> that demonstrates two core capabilities of embodied intelligence: <span class="ok">robotic arm manipulation</span> driven by visual perception and language-guided reasoning, and <span class="pur">LiDAR-based SLAM</span> for real-time mapping and localization on a GPS-denied autonomous rover - all built on <span class="ind">ROS 2</span>.
+      </p>
+    </div>
+  </div>
+
+  <!-- Why It Matters -->
+  <div class="sec">
+    <div class="sec-h o"><span class="sec-label">Why It Matters</span></div>
+    <div class="sec-b">
+      <p>
+        Most Vision-Language-Action models are tested only in simulation. <span class="dn">The sim-to-real gap</span> - sensor noise, calibration error, clutter, grasp instability - means actions that work digitally often fail on real hardware. Simultaneously, autonomous navigation in GPS-denied environments demands robust <span class="pur">onboard mapping and localization</span>. This project validates both capabilities on <span class="ok">physical systems</span>.
+      </p>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats">
+    <div class="st"><div class="st-v" style="color:var(--indigo);">ROS 2</div><div class="st-l">Unified Middleware<br>for Both Systems</div></div>
+    <div class="st"><div class="st-v" style="color:var(--red);">Sim→Real</div><div class="st-l">Gap Addressed<br>with Physical Tests</div></div>
+    <div class="st"><div class="st-v" style="color:var(--green2);">2 Demos</div><div class="st-l">Arm Manipulation<br>+ Rover SLAM</div></div>
+  </div>
+
+  <!-- Hardware & Software Platform -->
+  <div class="sec">
+    <div class="sec-h d"><span class="sec-label">Hardware &amp; Software Platform</span></div>
+    <div class="sec-b">
+      <p style="margin-bottom:6px;"><span class="hi">Manipulation Stack</span></p>
+      <div class="sys-wrap" style="margin-top:0;">
+        <span class="sys-tag">ZED Mini RGB-D</span>
+        <span class="sys-tag">xArm 6-DOF</span>
+        <span class="sys-tag">MoveIt 2</span>
+        <span class="sys-tag green">Hand-Eye Cal.</span>
+      </div>
+      <p style="margin-top:8px;margin-bottom:6px;"><span class="pur">SLAM Stack</span></p>
+      <div class="sys-wrap" style="margin-top:0;">
+        <span class="sys-tag purple">LiDAR Sensor</span>
+        <span class="sys-tag purple">ROS 2 Nav</span>
+        <span class="sys-tag purple">SLAM Toolbox</span>
+        <span class="sys-tag purple">GPS-Denied Rover</span>
+      </div>
+      <p style="margin-top:8px;margin-bottom:6px;"><span class="am">Shared Infrastructure</span></p>
+      <div class="sys-wrap" style="margin-top:0;">
+        <span class="sys-tag amber">ROS 2 Humble</span>
+        <span class="sys-tag amber">TF2 Transforms</span>
+        <span class="sys-tag amber">RViz2</span>
+        <span class="sys-tag amber">Gazebo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Outcomes -->
+  <div class="sec">
+    <div class="sec-h g"><span class="sec-label">Key Outcomes</span></div>
+    <div class="sec-b">
+      <div class="ach-grid">
+        <div class="ach"><div class="ach-v" style="color:var(--indigo);">VLA</div><div class="ach-d">Vision-Language-Action Validation</div></div>
+        <div class="ach"><div class="ach-v" style="color:var(--sky);">MAN</div><div class="ach-d">Physical Arm Manipulation</div></div>
+        <div class="ach"><div class="ach-v" style="color:var(--purple);">SLAM</div><div class="ach-d">LiDAR Mapping &amp; Localization</div></div>
+        <div class="ach"><div class="ach-v" style="color:var(--green2);">SAFE</div><div class="ach-d">Safety-Aware Execution</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end col 1 -->
+
+<!-- ═══════ COL 2 - DEMO 1: ROBOTIC MANIPULATION ═══════ -->
+<div class="col">
+
+  <div class="demo-stripe">DEMONSTRATION 1 - ROBOTIC ARM MANIPULATION</div>
+
+  <!-- Perception-to-Action Pipeline -->
+  <div class="sec">
+    <div class="sec-h b"><span class="sec-label">Perception-to-Action Pipeline</span></div>
+    <div class="sec-b">
+      <p>
+        The manipulation system captures the workspace using a <span class="hi">ZED Mini stereo camera</span> to produce aligned RGB and depth streams. Objects are detected and localized in 3D, then <span class="ok">hand-eye calibration</span> transforms camera-frame positions into the robot base frame. A <span class="ind">VLA reasoning module</span> interprets the scene and user commands, generating target poses that are translated into <span class="ok">joint trajectories</span> via MoveIt 2, driving the xArm to perform physical pick-and-place.
+      </p>
+    </div>
+  </div>
+
+  <!-- Manipulation Workflow SVG -->
+  <div class="sec" style="flex-shrink:0;">
+    <div class="sec-h d"><span class="sec-label">Manipulation Workflow</span></div>
+    <div class="sec-b" style="padding:5px 4px 3px;">
+<svg width="100%" viewBox="0 0 480 115" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<defs>
+  <marker id="ma" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M1 2L8 5L1 8" fill="none" stroke="#1A237E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <marker id="mg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M1 2L8 5L1 8" fill="none" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<!-- Row 1: Perception -->
+<rect x="2" y="2" width="476" height="42" rx="5" fill="#E8EAF6" stroke="#7986CB" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="10" y="13" font-size="7" fill="#1A237E" font-weight="700" letter-spacing="1" font-family="JetBrains Mono,monospace">PERCEPTION</text>
+<rect x="10" y="18" width="90" height="20" rx="3" fill="#DBEAFE" stroke="#93C5FD" stroke-width="1"/>
+<text x="55" y="31" text-anchor="middle" font-size="8" fill="#1E3A5F" font-weight="600">RGB-D Input</text>
+<line x1="100" y1="28" x2="120" y2="28" stroke="#1A237E" stroke-width="1" marker-end="url(#ma)"/>
+<rect x="120" y="18" width="100" height="20" rx="3" fill="#DBEAFE" stroke="#93C5FD" stroke-width="1"/>
+<text x="170" y="31" text-anchor="middle" font-size="8" fill="#1E3A5F" font-weight="600">Object Detection</text>
+<line x1="220" y1="28" x2="240" y2="28" stroke="#1A237E" stroke-width="1" marker-end="url(#ma)"/>
+<rect x="240" y="18" width="115" height="20" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="297" y="31" text-anchor="middle" font-size="8" fill="#3B0764" font-weight="600">Hand-Eye Calibration</text>
+<line x1="355" y1="28" x2="375" y2="28" stroke="#1A237E" stroke-width="1" marker-end="url(#ma)"/>
+<rect x="375" y="18" width="95" height="20" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+<text x="422" y="31" text-anchor="middle" font-size="8" fill="#92400E" font-weight="600">TF Transform</text>
+
+<!-- Row 2: Reasoning & Execution -->
+<rect x="2" y="50" width="476" height="42" rx="5" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="10" y="61" font-size="7" fill="#15803D" font-weight="700" letter-spacing="1" font-family="JetBrains Mono,monospace">REASONING → EXECUTION</text>
+<rect x="10" y="66" width="100" height="20" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+<text x="60" y="79" text-anchor="middle" font-size="8" fill="#92400E" font-weight="600">VLA Reasoning</text>
+<line x1="110" y1="76" x2="130" y2="76" stroke="#2E7D32" stroke-width="1" marker-end="url(#mg)"/>
+<rect x="130" y="66" width="110" height="20" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="185" y="79" text-anchor="middle" font-size="8" fill="#14532D" font-weight="600">MoveIt 2 Planning</text>
+<line x1="240" y1="76" x2="260" y2="76" stroke="#2E7D32" stroke-width="1" marker-end="url(#mg)"/>
+<rect x="260" y="66" width="100" height="20" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="310" y="79" text-anchor="middle" font-size="8" fill="#14532D" font-weight="600">Joint Trajectory</text>
+<line x1="360" y1="76" x2="380" y2="76" stroke="#2E7D32" stroke-width="1" marker-end="url(#mg)"/>
+<rect x="380" y="66" width="90" height="20" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="425" y="79" text-anchor="middle" font-size="8" fill="#14532D" font-weight="700">xArm Execute</text>
+
+<!-- Connector -->
+<line x1="422" y1="42" x2="422" y2="50" stroke="#1A237E" stroke-width="1" stroke-dasharray="3 2"/>
+<line x1="422" y1="50" x2="60" y2="50" stroke="#1A237E" stroke-width="1" stroke-dasharray="3 2"/>
+<line x1="60" y1="50" x2="60" y2="66" stroke="#1A237E" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#ma)"/>
+
+<!-- Caption -->
+<text x="240" y="108" text-anchor="middle" font-size="7.5" fill="#94A3B8" font-style="italic">Perception → Calibration → Reasoning → Physical Manipulation</text>
+</svg>
+    </div>
+  </div>
+
+  <!-- Manipulation Video -->
+  <div class="video-slot" style="width:100%;height:130px;">
+    <video src="robotic arm.mp4" autoplay muted loop playsinline></video>
+    <span class="sl">VIDEO 1 - xArm Pick-and-Place Demo</span>
+  </div>
+
+  <!-- What This Demonstrates -->
+  <div class="sec">
+    <div class="sec-h t"><span class="sec-label">What This Demonstrates</span></div>
+    <div class="sec-b">
+      <ul class="fl">
+        <li><div class="dot ds"></div><div><span class="ok">Validates VLA outputs</span> on physical hardware via real pick-and-place</div></li>
+        <li><div class="dot dg"></div><div>Bridges <span class="hi">RGB-D perception</span> with calibrated arm motion</div></li>
+        <li><div class="dot dt"></div><div>Converts <span class="ok">detected 3D poses</span> into executable robot trajectories</div></li>
+        <li><div class="dot do"></div><div>Handles <span class="am">real-world noise</span> - lighting, clutter, sensor error</div></li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- end col 2 -->
+
+<!-- ═══════ COL 3 - DEMO 2: LiDAR SLAM ON ROVER ═══════ -->
+<div class="col">
+
+  <div class="demo-stripe purple-stripe">DEMONSTRATION 2 - LiDAR SLAM ON GPS-DENIED ROVER</div>
+
+  <!-- Autonomous Mapping Pipeline -->
+  <div class="sec">
+    <div class="sec-h p"><span class="sec-label">Autonomous Mapping Pipeline</span></div>
+    <div class="sec-b">
+      <p>
+        The rover operates in <span class="pur">GPS-denied environments</span>, relying entirely on onboard LiDAR for spatial awareness. Point cloud data is processed through the <span class="ind">ROS 2 SLAM Toolbox</span> to build real-time occupancy grid maps while simultaneously localizing the rover within the constructed map. This enables autonomous navigation without external positioning infrastructure.
+      </p>
+    </div>
+  </div>
+
+  <!-- SLAM Workflow SVG -->
+  <div class="sec" style="flex-shrink:0;">
+    <div class="sec-h d"><span class="sec-label">SLAM Workflow</span></div>
+    <div class="sec-b" style="padding:5px 4px 3px;">
+<svg width="100%" viewBox="0 0 440 70" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<defs>
+  <marker id="mp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M1 2L8 5L1 8" fill="none" stroke="#4A148C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<rect x="2" y="2" width="436" height="42" rx="5" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="10" y="13" font-size="7" fill="#4A148C" font-weight="700" letter-spacing="1" font-family="JetBrains Mono,monospace">LIDAR SLAM PIPELINE</text>
+
+<rect x="10" y="18" width="82" height="20" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="51" y="31" text-anchor="middle" font-size="8" fill="#3B0764" font-weight="600">LiDAR Scan</text>
+
+<line x1="92" y1="28" x2="108" y2="28" stroke="#4A148C" stroke-width="1" marker-end="url(#mp)"/>
+<rect x="108" y="18" width="82" height="20" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="149" y="31" text-anchor="middle" font-size="8" fill="#3B0764" font-weight="600">Point Cloud</text>
+
+<line x1="190" y1="28" x2="206" y2="28" stroke="#4A148C" stroke-width="1" marker-end="url(#mp)"/>
+<rect x="206" y="18" width="82" height="20" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="247" y="31" text-anchor="middle" font-size="8" fill="#3B0764" font-weight="600">SLAM Toolbox</text>
+
+<line x1="288" y1="28" x2="304" y2="28" stroke="#4A148C" stroke-width="1" marker-end="url(#mp)"/>
+<rect x="304" y="18" width="60" height="20" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="334" y="31" text-anchor="middle" font-size="8" fill="#14532D" font-weight="600">Map</text>
+
+<line x1="364" y1="28" x2="380" y2="28" stroke="#4A148C" stroke-width="1" marker-end="url(#mp)"/>
+<rect x="380" y="18" width="50" height="20" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="405" y="31" text-anchor="middle" font-size="8" fill="#14532D" font-weight="700">Pose</text>
+
+<text x="220" y="62" text-anchor="middle" font-size="7.5" fill="#94A3B8" font-style="italic">Scan → Process → Map → Localize - all without GPS</text>
+</svg>
+    </div>
+  </div>
+
+  <!-- Rover Videos -->
+  <div class="video-slot" style="width:100%;height:105px;">
+    <video src="rover.mp4" autoplay muted loop playsinline></video>
+    <span class="sl">VIDEO 2 - Rover LiDAR Mapping in Action</span>
+  </div>
+
+
+
+  <!-- What This Demonstrates -->
+  <div class="sec">
+    <div class="sec-h t"><span class="sec-label">What This Demonstrates</span></div>
+    <div class="sec-b">
+      <ul class="fl">
+        <li><div class="dot dp"></div><div><span class="pur">Real-time SLAM</span> in unstructured, GPS-denied environments</div></li>
+        <li><div class="dot di"></div><div><span class="ind">Occupancy grid mapping</span> from raw LiDAR point clouds</div></li>
+        <li><div class="dot dg"></div><div><span class="ok">Simultaneous localization</span> without external positioning</div></li>
+        <li><div class="dot ds"></div><div>Perception-driven intelligence <span class="hi">beyond manipulation</span></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Impact -->
+  <div class="sec">
+    <div class="sec-h g"><span class="sec-label">Broader Impact</span></div>
+    <div class="sec-b">
+      <ul class="fl">
+        <li><div class="dot dr"></div><div>Bridges <span class="ok">simulation and physical reality</span> for VLA models</div></li>
+        <li><div class="dot dg"></div><div>Extends embodied AI from <span class="hi">manipulation to navigation</span></div></li>
+        <li><div class="dot dt"></div><div>Reusable platform for <span class="ok">future perception-to-action</span> research</div></li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- end col 3 -->
+</div><!-- end body -->
+</div><!-- end poster -->
+
+<!-- ══ SECTION ZOOM MODAL ══ -->
+<div class="sec-modal" id="secModal" onclick="closeSec(event)">
+  <div class="sec-card" id="secCard">
+    <div class="sec-card-head">
+      <div class="sec-card-title" id="secCardTitle"></div>
+      <button type="button" class="sec-card-close" onclick="forceCloseSec()">×</button>
+    </div>
+    <div class="sec-card-body" id="secCardBody"></div>
+  </div>
+</div>
+
+<!-- ══ TEAM VRITAM MODAL ══ -->
+<div class="sec-modal" id="vritamTeamModal" role="dialog" aria-modal="true" aria-labelledby="vritamTeamModalTitle" onclick="closeVritamTeamModal(event)">
+  <div class="sec-card" id="vritamTeamCard">
+    <div class="sec-card-head">
+      <div class="sec-card-title" id="vritamTeamModalTitle">Team Vritam</div>
+      <button type="button" class="sec-card-close" onclick="forceCloseVritamTeamModal()" aria-label="Close">×</button>
+    </div>
+    <div class="sec-card-body">
+      <div class="vritam-team-modal-inner">
+        <img class="vritam-team-modal-logo" src="Vritam.png" alt="">
+        <div class="vritam-team-modal-copy">
+          <p class="vritam-team-modal-desc">Research and innovation team building embodied AI, robotics, and field systems.</p>
+          <a class="vritam-team-modal-btn" href="https://vritamlabs.com" target="_blank" rel="noopener noreferrer">Visit Vritam Labs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Enforce muted videos at all times but allow play/pause controls
+document.querySelectorAll('video').forEach(function(v) {
+  v.muted = true;
+  v.volume = 0;
+  v.controls = true;
+  v.addEventListener('volumechange', function() {
+    if(!this.muted || this.volume > 0) {
+      this.muted = true;
+      this.volume = 0;
+    }
+  });
+});
+
+function openVritamTeamModal(){
+  document.getElementById('vritamTeamModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function forceCloseVritamTeamModal(){
+  document.getElementById('vritamTeamModal').classList.remove('open');
+  if(!document.getElementById('secModal').classList.contains('open')){
+    document.body.style.overflow='';
+  }
+}
+function closeVritamTeamModal(e){
+  if(e.target.id==='vritamTeamModal') forceCloseVritamTeamModal();
+}
+
+(function(){
+  var t=document.getElementById('vritamTeamTrigger');
+  if(!t) return;
+  t.addEventListener('click',function(e){ e.preventDefault(); openVritamTeamModal(); });
+  t.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){
+      e.preventDefault();
+      openVritamTeamModal();
+    }
+  });
+})();
+
+function openSec(el){
+  const label=el.querySelector('.sec-label')?.textContent||'Detail';
+  const body=el.querySelector('.sec-b');
+  if(!body) return;
+  document.getElementById('secCardTitle').textContent=label;
+  const clone=body.cloneNode(true);
+  clone.querySelectorAll('input[type=file]').forEach(i=>i.remove());
+  document.getElementById('secCardBody').innerHTML='';
+  document.getElementById('secCardBody').appendChild(clone);
+  document.getElementById('secModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function forceCloseSec(){
+  document.getElementById('secModal').classList.remove('open');
+  if(!document.getElementById('vritamTeamModal').classList.contains('open')){
+    document.body.style.overflow='';
+  }
+}
+function closeSec(e){if(e.target.id==='secModal') forceCloseSec();}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape') return;
+  if(document.getElementById('vritamTeamModal').classList.contains('open')){
+    forceCloseVritamTeamModal();
+  }else{
+    forceCloseSec();
+  }
+});
+document.querySelectorAll('.sec').forEach(function(sec){
+  sec.classList.add('zoomable');
+  sec.addEventListener('click',function(e){
+    if(e.target.closest('input,button,a,video')) return;
+    openSec(sec);
+  });
+});
+</script>
+</body>
+</html>
+

@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Jatayu: Integrated Air-Ground SAR &amp; Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Serif+4:wght@600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#F2F4FA;
+  --surface:#FFFFFF;
+  --surface2:#ECEEF8;
+  --navy:#0C1B40;
+  --blue:#1557A0;
+  --blue2:#1976D2;
+  --sky:#1E88E5;
+  --green:#1B5E20;
+  --green2:#2E7D32;
+  --teal:#00695C;
+  --amber:#E65100;
+  --amber2:#F57C00;
+  --red:#B71C1C;
+  --purple:#4A148C;
+  --indigo:#1A237E;
+  --indigo2:#283593;
+  --text:#111827;
+  --text2:#374151;
+  --muted:#6B7280;
+  --light:#9CA3AF;
+  --border:#CBD5E1;
+  --border2:#94A3B8;
+}
+html,body{width:100%;min-height:100vh;overflow-x:hidden;overflow-y:auto;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:11px;line-height:1.5;}
+.poster{width:100%;min-height:100vh;display:grid;grid-template-rows:max-content 1fr;}
+
+/* ── HEADER ── */
+header{
+  background:linear-gradient(90deg,#0d0d1a 0%,#1a1a2e 30%,#16213e 60%,#0f3460 100%);
+  border-bottom:3px solid #7c83ff;
+  display:grid;grid-template-columns:minmax(200px,1fr) minmax(380px,2fr) minmax(220px,1fr);align-items:center;padding:12px 16px 14px;gap:14px;
+}
+.h-titles{display:flex;justify-content:center;align-items:center;text-align:center;}
+.h-title{font-family:'DM Serif Display',serif;font-size:19px;font-weight:400;color:#FFFFFF;line-height:1.05;letter-spacing:0.15px;max-width:760px;margin:0 auto;text-align:center;}
+.h-title .accent{color:#b8bbff;font-style:italic;}
+.h-uni{display:flex;align-items:center;gap:9px;min-width:220px;padding:5px 10px;text-align:left;}
+.h-team{justify-self:start;min-width:0;width:max-content;padding:5px 8px 5px 6px;gap:7px;}
+.h-uni img{width:28px;height:28px;object-fit:contain;border-radius:4px;background:#fff;padding:2px;flex-shrink:0;}
+.h-uni .u-name{display:block;font-size:10px;color:#fff;font-weight:600;line-height:1.2;}
+.h-uni .u-sub{display:block;font-size:8px;color:#c5cae9;line-height:1.15;}
+.h-badge{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.22);border-radius:5px;padding:4px 12px;text-align:center;flex-shrink:0;}
+
+.h-team-trigger{cursor:pointer;border-radius:6px;transition:background .15s,box-shadow .15s;}
+.h-team-trigger:hover{background:rgba(255,255,255,0.14);box-shadow:0 0 0 2px rgba(255,255,255,0.32);}
+.h-team-trigger:focus{outline:none;}
+.h-team-trigger:focus-visible{background:rgba(255,255,255,0.14);box-shadow:0 0 0 2px rgba(200,203,255,0.85);}
+.vritam-team-modal-inner{display:flex;gap:18px;align-items:flex-start;}
+.vritam-team-modal-logo{width:72px;height:72px;object-fit:contain;border-radius:10px;background:#fff;padding:6px;flex-shrink:0;border:1px solid var(--border);}
+.vritam-team-modal-copy{flex:1;min-width:0;}
+.vritam-team-modal-desc{margin:0 0 16px;font-size:15.5px;line-height:1.6;color:var(--text2);}
+.vritam-team-modal-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;background:var(--indigo);color:#fff;border-radius:10px;font-weight:600;text-decoration:none;font-size:14px;transition:opacity .15s,transform .12s;}
+.vritam-team-modal-btn:hover{opacity:0.92;}
+
+/* ── BODY ── */
+.body{display:grid;grid-template-columns:1fr 1.15fr 1fr;overflow:visible;}
+.col{padding:7px 9px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:7px;overflow:visible;}
+.col:last-child{border-right:none;}
+
+/* ── SECTION ── */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
+.sec-h{display:flex;align-items:center;justify-content:center;gap:0;padding:5px 8px;border-bottom:1px solid var(--border);}
+.sec-h.r{background:#FEE2E2;border-bottom-color:#FECACA;}
+.sec-h.b{background:#DBEAFE;border-bottom-color:#BFDBFE;}
+.sec-h.g{background:#DCFCE7;border-bottom-color:#BBF7D0;}
+.sec-h.o{background:#FEF3C7;border-bottom-color:#FDE68A;}
+.sec-h.t{background:#CCFBF1;border-bottom-color:#99F6E4;}
+.sec-h.p{background:#EDE9FE;border-bottom-color:#DDD6FE;}
+.sec-h.d{background:var(--surface2);border-bottom-color:var(--border);}
+.sec-h.i{background:#E8EAF6;border-bottom-color:#C5CAE9;}
+.sec-label{font-size:9px;font-weight:700;letter-spacing:0.9px;text-transform:uppercase;color:var(--navy);font-family:'Inter',sans-serif;text-align:center;}
+.sec-b{padding:6px 9px;}
+
+p{font-size:10.5px;color:var(--text2);line-height:1.55;margin-bottom:3px;}
+p:last-child{margin-bottom:0;}
+.hi{color:var(--blue);font-weight:600;}
+.dn{color:var(--red);font-weight:600;}
+.ok{color:var(--green2);font-weight:600;}
+.am{color:var(--amber);font-weight:600;}
+.ind{color:var(--indigo);font-weight:600;}
+.pur{color:var(--purple);font-weight:600;}
+
+.stats{display:flex;gap:0;flex-shrink:0;}
+.st{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:5px 5px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+.st-v{font-family:'Source Serif 4',serif;font-size:15px;line-height:1.1;font-weight:700;}
+.st-l{font-size:8.5px;color:var(--muted);margin-top:2px;line-height:1.35;}
+
+.fl{list-style:none;}
+.fl li{display:flex;align-items:flex-start;gap:6px;padding:3px 0;border-bottom:1px solid #F1F5F9;font-size:10.5px;color:var(--text2);}
+.fl li:last-child{border-bottom:none;}
+.dot{width:5px;height:5px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.ds{background:var(--sky);} .dg{background:var(--green2);} .dt{background:var(--teal);}
+.do{background:var(--amber2);} .dp{background:var(--purple);} .dr{background:var(--red);}
+.di{background:var(--indigo);}
+
+.img-slot{background:#0d0d1a;border:1.5px solid #313152;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.img-slot img{width:100%;height:100%;object-fit:cover;border-radius:5px;display:block;}
+.img-slot .sl{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#fff;padding:2px 8px;border-radius:3px;font-size:7.5px;letter-spacing:0.4px;z-index:2;white-space:nowrap;pointer-events:none;}
+.img-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 8px;}
+.img-placeholder .ip-icon{width:32px;height:32px;border-radius:50%;background:rgba(124,131,255,0.15);border:1.5px solid rgba(124,131,255,0.4);display:flex;align-items:center;justify-content:center;font-size:14px;color:#7c83ff;}
+.img-placeholder .ip-label{font-size:8px;color:#9CA3AF;text-align:center;font-family:'JetBrains Mono',monospace;letter-spacing:0.3px;line-height:1.4;}
+.img-placeholder .ip-tag{font-size:7px;color:#7c83ff;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+
+.video-slot{background:#0d0d1a;border:1.5px solid #313152;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.video-slot video{width:100%;height:100%;object-fit:contain;background-color:#000;border-radius:5px;display:block;}
+.video-slot .sl{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#fff;padding:2px 8px;border-radius:3px;font-size:7.5px;letter-spacing:0.4px;z-index:2;white-space:nowrap;pointer-events:none;}
+
+.sys-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.sys-tag{padding:3px 8px;border-radius:4px;font-size:9px;font-weight:600;background:#E8EAF6;border:1px solid #C5CAE9;color:var(--indigo);font-family:'JetBrains Mono',monospace;letter-spacing:0.3px;}
+.sys-tag.teal{background:#F0FDFA;border-color:#5EEAD4;color:var(--teal);}
+.sys-tag.purple{background:#F5F3FF;border-color:#C4B5FD;color:var(--purple);}
+.sys-tag.green{background:#F0FDF4;border-color:#86EFAC;color:var(--green2);}
+.sys-tag.amber{background:#FFFBEB;border-color:#FCD34D;color:var(--amber);}
+.sys-tag.red{background:#FEF2F2;border-color:#FCA5A5;color:var(--red);}
+
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.ach{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 7px;}
+.ach-v{font-family:'Source Serif 4',serif;font-size:17px;line-height:1;font-weight:700;}
+.ach-d{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.35;}
+
+.sec.zoomable{cursor:zoom-in;transition:box-shadow .18s,transform .18s;}
+.sec.zoomable:hover{box-shadow:0 4px 16px rgba(26,35,126,0.13);transform:translateY(-1px);}
+.sec.zoomable .sec-h::after{content:'⊕';font-size:10px;color:var(--indigo);opacity:0.5;margin-left:6px;font-style:normal;flex-shrink:0;}
+.sec-modal{position:fixed;inset:0;background:rgba(8,10,27,.55);display:none;align-items:center;justify-content:center;padding:24px;z-index:9999;backdrop-filter:blur(5px);}
+.sec-modal.open{display:flex;}
+.sec-card{width:min(640px,94vw);max-height:88vh;overflow-y:auto;background:#fff;border:1px solid #D6E0ED;border-radius:16px;box-shadow:0 28px 64px rgba(0,0,0,.22);position:relative;}
+.sec-card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:2;border-radius:16px 16px 0 0;}
+.sec-card-title{font-family:'Source Serif 4',serif;font-size:18px;font-weight:700;color:var(--navy);line-height:1.15;}
+.sec-card-close{width:32px;height:32px;border:none;border-radius:50%;background:#F1F5F9;color:var(--navy);font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.sec-card-body{padding:20px 24px 24px;font-size:15.5px;color:var(--text2);line-height:1.7;}
+.sec-card-body p{font-size:15.5px;line-height:1.7;color:var(--text2);}
+.sec-card-body .fl li{font-size:15.5px;padding:6px 0;line-height:1.65;}
+.sec-card-body .sys-tag{font-size:12.5px;padding:5px 12px;}
+.sec-card-body .ach-v{font-size:30px;}
+.sec-card-body .ach-d{font-size:13.5px;line-height:1.5;}
+.sec-card-body .dot{width:8px;height:8px;margin-top:6px;}
+.sec-card-body .st-v{font-size:32px;}
+.sec-card-body .st-l{font-size:13.5px;}
+.sec-card-body .stats{gap:12px;margin-bottom:8px;}
+.sec-card-body .st{padding:12px 10px;}
+
+/* Media lightbox (images + videos) */
+.sec-card-media{width:min(1100px,96vw);max-width:none;}
+.sec-card-body-media{padding:10px 14px 18px;text-align:center;background:#0a0a12;border-radius:0 0 16px 16px;}
+.sec-card-body-media img{max-width:100%;max-height:min(82vh,920px);width:auto;height:auto;object-fit:contain;border-radius:8px;display:block;margin:0 auto;}
+.sec-card-body-media video{max-width:100%;max-height:min(82vh,920px);width:auto;display:block;margin:0 auto;border-radius:8px;background:#000;}
+.media-expand-btn{position:absolute;top:6px;right:6px;z-index:4;width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:rgba(0,0,0,0.72);color:#e8e8ff;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit;transition:opacity .15s,transform .12s,background .15s;}
+.media-expand-btn:hover{opacity:1;background:rgba(124,131,255,0.35);transform:scale(1.06);}
+.media-expand-btn:focus-visible{outline:2px solid #7c83ff;outline-offset:2px;}
+.img-slot:has(> img){cursor:zoom-in;}
+.img-slot:has(> img) > img{cursor:zoom-in;}
+
+.demo-stripe{background:linear-gradient(90deg,var(--indigo),#283593);color:#fff;font-size:8px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:4px 10px;text-align:center;font-family:'JetBrains Mono',monospace;}
+.demo-stripe.purple-stripe{background:linear-gradient(90deg,#4A148C,#6A1B9A);}
+.demo-stripe.teal-stripe{background:linear-gradient(90deg,#004D40,#00695C);}
+
+@media (min-width:1440px) and (min-height:850px){
+  html,body{font-size:13px;}
+  header{padding:14px 24px 16px;}
+  .h-title{font-size:21px;max-width:none;white-space:nowrap;}
+  .h-uni .u-name{font-size:12px;}
+  .h-uni .u-sub{font-size:10px;}
+  .col{padding:10px 14px;gap:10px;}
+  .sec-h{padding:7px 10px;}
+  .sec-label{font-size:11px;}
+  .sec-b{padding:9px 12px;}
+  p,.fl li{font-size:13px;}
+  .sys-tag{font-size:11px;padding:4px 10px;}
+  .st-v{font-size:20px;}
+  .st-l{font-size:11px;}
+  .ach-v{font-size:22px;}
+  .ach-d{font-size:11.5px;}
+  .dot{width:6px;height:6px;margin-top:5px;}
+}
+
+@media (max-width:980px){
+  html,body{width:100%;height:auto;overflow:auto;font-size:13px;}
+  .poster{display:block;}
+  header{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:14px 12px;border-bottom:2px solid #7c83ff;}
+  .h-badge,.h-uni,.h-team{width:100%;max-width:none;min-width:0;}
+  .h-team{order:1;justify-content:center;}
+  .h-titles{order:2;display:block;}
+  .h-title{font-size:28px;line-height:1.08;max-width:none;padding:2px 4px;}
+  header>.h-badge.h-uni[style]{order:3;justify-content:center !important;text-align:center;}
+  header>.h-badge.h-uni[style] div,.h-team div{text-align:center;}
+  .body{display:flex;flex-direction:column;}
+  .col{padding:10px 12px;border-right:none;border-bottom:1px solid var(--border);gap:10px;}
+  .col:last-child{border-bottom:none;}
+  .sec{border-radius:10px;}
+  .sec-h{padding:8px 10px;}
+  .sec-label{font-size:11px;letter-spacing:0.8px;}
+  .sec-b{padding:10px 11px;}
+  p,.fl li{font-size:13px;line-height:1.6;}
+  .stats{gap:8px;flex-direction:column;}
+  .st{padding:9px 8px;}
+  .st-v{font-size:28px;}
+  .st-l{font-size:11px;}
+  .ach-grid{grid-template-columns:1fr;gap:8px;}
+  .ach{padding:9px 10px;}
+  .ach-v{font-size:22px;}
+  .ach-d{font-size:11.5px;line-height:1.5;}
+  .sys-tag{font-size:10px;padding:4px 9px;}
+  .sec-card-media{width:min(100vw - 16px, 96vw);}
+  .sec-card-body-media{padding:8px 10px 14px;}
+  .sec-card-body-media img,.sec-card-body-media video{max-height:min(70vh,800px);}
+}
+@media (max-width:640px){
+  html,body{font-size:14px;}
+  header{padding:12px 10px;gap:8px;}
+  .h-title{font-size:22px;line-height:1.12;}
+  .h-uni img{width:24px;height:24px;}
+  .h-uni{padding:7px 9px;gap:8px;}
+  .h-uni .u-name{font-size:11px;}
+  .h-uni .u-sub{font-size:8.5px;}
+  .col{padding:9px 10px;gap:9px;}
+  .sec-h{padding:7px 9px;}
+  .sec-label{font-size:10.5px;}
+  .sec-b{padding:9px 10px;}
+  p,.fl li{font-size:12.5px;line-height:1.58;}
+  .st-v{font-size:24px;}
+  .st-l{font-size:10px;}
+}
+</style>
+</head>
+<body>
+<div class="poster">
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="h-badge h-uni h-team h-team-trigger" id="vritamTeamTrigger" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="vritamTeamModal" aria-label="Open Team Vritam details">
+    <img src="Vritam.png" alt="" aria-hidden="true">
+    <div>
+      <span class="u-name">Team Vritam</span>
+      <span class="u-sub">Research and Innovation Team</span>
+    </div>
+  </div>
+  <div class="h-titles">
+    <div class="h-title"><span class="accent">Jatayu</span>: Integrated Air-Ground SAR &amp; Mission Control</div>
+  </div>
+  <div class="h-badge h-uni" style="justify-self:end;">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRB2V_EFDc44vPTLQ3ilBFCVJy6ii11Btq-Wg&s" alt="MITS-DU logo">
+    <div>
+      <span class="u-name">MITS-DU Gwalior</span>
+      <span class="u-sub">Madhav Institute of Technology and Science</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══ BODY ══ -->
+<div class="body">
+
+<!-- ═══════ COL 1: PROJECT + VTOL DRONE ═══════ -->
+<div class="col">
+
+  <div class="sec">
+    <div class="sec-h i"><span class="sec-label">Project Jatayu</span></div>
+    <div class="sec-b">
+      <p>An integrated <span class="hi">autonomous SAR platform</span> combining a <span class="ok">hybrid VTOL drone</span> for aerial surveillance, a <span class="hi">real-time GCS</span> for mission coordination, and a <span class="pur">ground rover</span> with a robotic arm + LiDAR for close-proximity ground operations.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h o"><span class="sec-label">Why It Matters</span></div>
+    <div class="sec-b">
+      <p>In disaster scenarios, <span class="dn">the first 72 hours are critical</span>. The VTOL rapidly locates survivors from above, the GCS coordinates in real time, and the rover physically intervenes on the ground, all working as a <span class="ind">unified system</span>.</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="st"><div class="st-v" style="color:var(--indigo);">3</div><div class="st-l">Integrated<br>Subsystems</div></div>
+    <div class="st"><div class="st-v" style="color:var(--red);">SAR</div><div class="st-l">Search &amp; Rescue<br>Mission Focus</div></div>
+    <div class="st"><div class="st-v" style="color:var(--green2);">AI</div><div class="st-l">YOLOv8 +<br>Posture Detection</div></div>
+  </div>
+
+  <div class="demo-stripe">VTOL DRONE: AERIAL SURVEILLANCE</div>
+
+  <div class="sec">
+    <div class="sec-h b"><span class="sec-label">VTOL Drone</span></div>
+    <div class="sec-b">
+      <p>A <span class="hi">hybrid VTOL</span> that launches vertically, transitions to fixed-wing for range, and loiters over areas of interest. Streams live video processed by <span class="ind">YOLOv8</span> for real-time human detection. Survivors are <span class="ok">auto-geotagged</span> via GPS, with <span class="pur">posture classification</span> (upright vs prone) to prioritize distressed individuals.</p>
+    </div>
+  </div>
+
+  <!-- VTOL Video -->
+  <div class="video-slot" style="width:100%;height:130px;">
+    <video src="VTOL.mp4" autoplay muted loop playsinline></video>
+    <span class="sl">VTOL Drone: Hybrid Build</span>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h t"><span class="sec-label">VTOL Capabilities</span></div>
+    <div class="sec-b">
+      <ul class="fl">
+        <li><div class="dot ds"></div><div><span class="hi">Vertical take-off &amp; landing</span>, no runway needed</div></li>
+        <li><div class="dot dg"></div><div><span class="ok">Fixed-wing cruise</span> for extended range and endurance</div></li>
+        <li><div class="dot do"></div><div><span class="am">Live MJPEG stream</span> with YOLO bounding boxes</div></li>
+        <li><div class="dot dp"></div><div><span class="pur">Posture classification</span> for survivor prioritization</div></li>
+        <li><div class="dot dr"></div><div><span class="dn">GPS geotagging</span> of all detected targets</div></li>
+        <li><div class="dot di"></div><div><span class="ind">Payload delivery</span> via servo release</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h d"><span class="sec-label">VTOL Tech Stack</span></div>
+    <div class="sec-b">
+      <div class="sys-wrap" style="margin-top:0;">
+        <span class="sys-tag">ArduPilot VTOL</span>
+        <span class="sys-tag">MAVLink</span>
+        <span class="sys-tag">YOLOv8s</span>
+        <span class="sys-tag green">GPS Telemetry</span>
+        <span class="sys-tag amber">OpenCV</span>
+        <span class="sys-tag purple">Posture AI</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end col 1 -->
+
+<!-- ═══════ COL 2: GROUND CONTROL STATION ═══════ -->
+<div class="col">
+
+  <div class="demo-stripe">GROUND CONTROL STATION: MISSION COMMAND</div>
+
+  <div class="sec">
+    <div class="sec-h i"><span class="sec-label">GCS: Real-Time Mission Control</span></div>
+    <div class="sec-b">
+      <p>A full-featured ground station built with <span class="hi">React + Vite</span> and <span class="ok">FastAPI</span>. Displays live telemetry, streams AI-processed video, manages geotagged targets, coordinates payload drops, and provides a tactical map with real-time drone tracking.</p>
+    </div>
+  </div>
+
+  <!-- GCS Architecture SVG -->
+  <div class="sec" style="flex-shrink:0;">
+    <div class="sec-h d"><span class="sec-label">System Architecture</span></div>
+    <div class="sec-b" style="padding:5px 4px 3px;">
+<svg width="100%" viewBox="0 0 480 155" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<defs>
+  <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M1 2L8 5L1 8" fill="none" stroke="#1A237E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M1 2L8 5L1 8" fill="none" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<rect x="2" y="2" width="476" height="35" rx="5" fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="10" y="13" font-size="7" fill="#1557A0" font-weight="700" letter-spacing="1" font-family="JetBrains Mono,monospace">VTOL DRONE</text>
+<rect x="10" y="17" width="80" height="16" rx="3" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+<text x="50" y="28" text-anchor="middle" font-size="7.5" fill="#1E3A5F" font-weight="600">ArduPilot</text>
+<rect x="100" y="17" width="80" height="16" rx="3" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+<text x="140" y="28" text-anchor="middle" font-size="7.5" fill="#1E3A5F" font-weight="600">GPS + IMU</text>
+<rect x="190" y="17" width="80" height="16" rx="3" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+<text x="230" y="28" text-anchor="middle" font-size="7.5" fill="#1E3A5F" font-weight="600">Camera</text>
+<rect x="280" y="17" width="90" height="16" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+<text x="325" y="28" text-anchor="middle" font-size="7.5" fill="#92400E" font-weight="600">Payload Servo</text>
+<rect x="380" y="17" width="90" height="16" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="425" y="28" text-anchor="middle" font-size="7.5" fill="#3B0764" font-weight="600">MAVLink TX</text>
+<line x1="140" y1="37" x2="140" y2="50" stroke="#1A237E" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#ab)"/>
+<line x1="325" y1="37" x2="325" y2="50" stroke="#1A237E" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#ab)"/>
+<rect x="2" y="50" width="476" height="46" rx="5" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="10" y="61" font-size="7" fill="#15803D" font-weight="700" letter-spacing="1" font-family="JetBrains Mono,monospace">FASTAPI BACKEND</text>
+<rect x="10" y="66" width="85" height="24" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="52" y="77" text-anchor="middle" font-size="7" fill="#14532D" font-weight="600">Telemetry</text>
+<text x="52" y="86" text-anchor="middle" font-size="6" fill="#14532D">HTTP Poll</text>
+<rect x="105" y="66" width="85" height="24" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="147" y="77" text-anchor="middle" font-size="7" fill="#14532D" font-weight="600">YOLOv8 AI</text>
+<text x="147" y="86" text-anchor="middle" font-size="6" fill="#14532D">Detection</text>
+<rect x="200" y="66" width="85" height="24" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="242" y="77" text-anchor="middle" font-size="7" fill="#14532D" font-weight="600">Target DB</text>
+<text x="242" y="86" text-anchor="middle" font-size="6" fill="#14532D">Geotag + Save</text>
+<rect x="295" y="66" width="85" height="24" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+<text x="337" y="77" text-anchor="middle" font-size="7" fill="#92400E" font-weight="600">MAVLink Cmds</text>
+<text x="337" y="86" text-anchor="middle" font-size="6" fill="#92400E">Mode / Drop</text>
+<rect x="390" y="66" width="82" height="24" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="431" y="77" text-anchor="middle" font-size="7" fill="#3B0764" font-weight="600">Recordings</text>
+<text x="431" y="86" text-anchor="middle" font-size="6" fill="#3B0764">MP4 Archive</text>
+<line x1="240" y1="96" x2="240" y2="108" stroke="#2E7D32" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#ag)"/>
+<rect x="2" y="108" width="476" height="35" rx="5" fill="#E8EAF6" stroke="#C5CAE9" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="10" y="119" font-size="7" fill="#1A237E" font-weight="700" letter-spacing="1" font-family="JetBrains Mono,monospace">REACT FRONTEND: OPERATOR DASHBOARD</text>
+<rect x="10" y="123" width="72" height="16" rx="3" fill="#E8EAF6" stroke="#7986CB" stroke-width="1"/>
+<text x="46" y="134" text-anchor="middle" font-size="7" fill="#1A237E" font-weight="600">Overview</text>
+<rect x="90" y="123" width="82" height="16" rx="3" fill="#E8EAF6" stroke="#7986CB" stroke-width="1"/>
+<text x="131" y="134" text-anchor="middle" font-size="7" fill="#1A237E" font-weight="600">Mission Ctrl</text>
+<rect x="180" y="123" width="82" height="16" rx="3" fill="#E8EAF6" stroke="#7986CB" stroke-width="1"/>
+<text x="221" y="134" text-anchor="middle" font-size="7" fill="#1A237E" font-weight="600">Tactical Map</text>
+<rect x="270" y="123" width="72" height="16" rx="3" fill="#E8EAF6" stroke="#7986CB" stroke-width="1"/>
+<text x="306" y="134" text-anchor="middle" font-size="7" fill="#1A237E" font-weight="600">Targets</text>
+<rect x="350" y="123" width="60" height="16" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+<text x="380" y="134" text-anchor="middle" font-size="7" fill="#92400E" font-weight="600">Payload</text>
+<rect x="418" y="123" width="55" height="16" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="445" y="134" text-anchor="middle" font-size="7" fill="#3B0764" font-weight="600">Settings</text>
+<text x="240" y="153" text-anchor="middle" font-size="7.5" fill="#94A3B8" font-style="italic">Drone > Backend (Telemetry + AI + Commands) > React Dashboard</text>
+</svg>
+    </div>
+  </div>
+
+  <!-- GCS Mission Control -->
+  <div class="img-slot" style="width:100%;height:110px;">
+    <img src="GCS mission control.png" alt="Jatayu GCS Mission Control dashboard">
+    <span class="sl">GCS Mission Control</span>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h g"><span class="sec-label">GCS Features</span></div>
+    <div class="sec-b">
+      <ul class="fl">
+        <li><div class="dot di"></div><div><span class="ind">Live telemetry</span> (GPS, altitude, heading, battery, speed)</div></li>
+        <li><div class="dot ds"></div><div><span class="hi">AI video stream</span> with real-time YOLO bounding boxes</div></li>
+        <li><div class="dot dg"></div><div><span class="ok">Target management</span> with auto-geotag and severity</div></li>
+        <li><div class="dot dp"></div><div><span class="pur">Tactical map</span> with drone, GCS, targets, and distances</div></li>
+        <li><div class="dot do"></div><div><span class="am">Payload drop</span> via servo release at target coordinates</div></li>
+        <li><div class="dot dr"></div><div><span class="dn">Flight commands</span> (GUIDED, AUTO, RTL, LOITER, QLOITER)</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h d"><span class="sec-label">GCS Tech Stack</span></div>
+    <div class="sec-b">
+      <p style="margin-bottom:4px;"><span class="hi">Frontend</span></p>
+      <div class="sys-wrap" style="margin-top:0;">
+        <span class="sys-tag">React 18</span>
+        <span class="sys-tag">Vite</span>
+        <span class="sys-tag">TypeScript</span>
+        <span class="sys-tag green">Zustand</span>
+        <span class="sys-tag green">Leaflet</span>
+      </div>
+      <p style="margin-top:6px;margin-bottom:4px;"><span class="ok">Backend</span></p>
+      <div class="sys-wrap" style="margin-top:0;">
+        <span class="sys-tag amber">FastAPI</span>
+        <span class="sys-tag amber">Uvicorn</span>
+        <span class="sys-tag amber">pymavlink</span>
+        <span class="sys-tag amber">OpenCV</span>
+        <span class="sys-tag amber">Ultralytics</span>
+      </div>
+      <p style="margin-top:6px;margin-bottom:4px;"><span class="pur">Protocols</span></p>
+      <div class="sys-wrap" style="margin-top:0;">
+        <span class="sys-tag purple">MAVLink TCP</span>
+        <span class="sys-tag purple">REST API</span>
+        <span class="sys-tag purple">WebSocket</span>
+        <span class="sys-tag purple">MJPEG</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tactical Map -->
+  <div class="img-slot" style="width:100%;height:100px;">
+    <img src="jatayumap.png" alt="Jatayu tactical map with targets and routes">
+    <span class="sl">Tactical Map with Targets + Distances</span>
+  </div>
+
+</div><!-- end col 2 -->
+
+<!-- ═══════ COL 3: GROUND ROVER ═══════ -->
+<div class="col">
+
+  <div class="demo-stripe teal-stripe">SAR GROUND ROVER: ROBOTIC ARM + LiDAR SLAM</div>
+
+  <div class="sec">
+    <div class="sec-h p"><span class="sec-label">Ground Rover: SAR Ground Ops</span></div>
+    <div class="sec-b">
+      <p>Operates at the point of need, navigating rubble, collapsed structures, and narrow passages where drones cannot reach. Carries a <span class="hi">robotic arm manipulator</span> for physical interaction and a <span class="ind">LiDAR sensor</span> for real-time mapping in GPS-denied environments.</p>
+    </div>
+  </div>
+
+  <!-- Rover in action -->
+  <div class="video-slot" style="width:100%;height:110px;">
+    <video src="rover.mp4" autoplay muted loop playsinline></video>
+    <span class="sl">Rover in Action</span>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h b"><span class="sec-label">Robotic Arm Manipulator</span></div>
+    <div class="sec-b">
+      <p>A <span class="hi">multi-DOF robotic arm</span> for ground-level SAR tasks: <span class="ok">clearing debris</span>, <span class="am">delivering medical supplies</span>, <span class="ind">actuating mechanisms</span>, and <span class="pur">retrieving hazardous objects</span>. Powered by <span class="ok">ROS 2 + MoveIt 2</span> with perception-driven grasp planning.</p>
+    </div>
+  </div>
+
+  <!-- Robotic arm in action -->
+  <div class="video-slot" style="width:100%;height:100px;">
+    <video src="robotic arm.mp4" autoplay muted loop playsinline></video>
+    <span class="sl">Robotic Arm in Action</span>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h p"><span class="sec-label">LiDAR SLAM: GPS-Denied Navigation</span></div>
+    <div class="sec-b">
+      <p>GPS is often <span class="dn">unavailable</span> indoors and in dense rubble. The rover's <span class="pur">LiDAR</span> performs <span class="ind">SLAM</span> via ROS 2 SLAM Toolbox, building real-time <span class="ok">occupancy grid maps</span> from point cloud data while tracking position within the map.</p>
+    </div>
+  </div>
+
+  <!-- SLAM Workflow SVG -->
+  <div class="sec" style="flex-shrink:0;">
+    <div class="sec-h d"><span class="sec-label">Rover SLAM Pipeline</span></div>
+    <div class="sec-b" style="padding:5px 4px 3px;">
+<svg width="100%" viewBox="0 0 440 70" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+<defs>
+  <marker id="mp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M1 2L8 5L1 8" fill="none" stroke="#4A148C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<rect x="2" y="2" width="436" height="42" rx="5" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="10" y="13" font-size="7" fill="#4A148C" font-weight="700" letter-spacing="1" font-family="JetBrains Mono,monospace">LIDAR SLAM PIPELINE</text>
+<rect x="10" y="18" width="82" height="20" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="51" y="31" text-anchor="middle" font-size="8" fill="#3B0764" font-weight="600">LiDAR Scan</text>
+<line x1="92" y1="28" x2="108" y2="28" stroke="#4A148C" stroke-width="1" marker-end="url(#mp)"/>
+<rect x="108" y="18" width="82" height="20" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="149" y="31" text-anchor="middle" font-size="8" fill="#3B0764" font-weight="600">Point Cloud</text>
+<line x1="190" y1="28" x2="206" y2="28" stroke="#4A148C" stroke-width="1" marker-end="url(#mp)"/>
+<rect x="206" y="18" width="82" height="20" rx="3" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+<text x="247" y="31" text-anchor="middle" font-size="8" fill="#3B0764" font-weight="600">SLAM Toolbox</text>
+<line x1="288" y1="28" x2="304" y2="28" stroke="#4A148C" stroke-width="1" marker-end="url(#mp)"/>
+<rect x="304" y="18" width="60" height="20" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="334" y="31" text-anchor="middle" font-size="8" fill="#14532D" font-weight="600">Map</text>
+<line x1="364" y1="28" x2="380" y2="28" stroke="#4A148C" stroke-width="1" marker-end="url(#mp)"/>
+<rect x="380" y="18" width="50" height="20" rx="3" fill="#DCFCE7" stroke="#4ADE80" stroke-width="1"/>
+<text x="405" y="31" text-anchor="middle" font-size="8" fill="#14532D" font-weight="700">Navigate</text>
+<text x="220" y="62" text-anchor="middle" font-size="7.5" fill="#94A3B8" font-style="italic">Scan > Process > Map > Localize > Navigate (no GPS)</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h t"><span class="sec-label">Rover SAR Capabilities</span></div>
+    <div class="sec-b">
+      <ul class="fl">
+        <li><div class="dot dp"></div><div><span class="pur">LiDAR SLAM</span> for GPS-denied mapping</div></li>
+        <li><div class="dot ds"></div><div><span class="hi">Robotic arm</span> for debris clearance and supply delivery</div></li>
+        <li><div class="dot dg"></div><div><span class="ok">Autonomous navigation</span> through rubble and tight spaces</div></li>
+        <li><div class="dot di"></div><div><span class="ind">ROS 2</span> with MoveIt 2, Nav2, SLAM Toolbox</div></li>
+        <li><div class="dot dr"></div><div>Reaches where <span class="dn">drones cannot</span> (indoors, underground)</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h d"><span class="sec-label">Rover Tech Stack</span></div>
+    <div class="sec-b">
+      <div class="sys-wrap" style="margin-top:0;">
+        <span class="sys-tag purple">LiDAR Sensor</span>
+        <span class="sys-tag purple">SLAM Toolbox</span>
+        <span class="sys-tag">ROS 2 Humble</span>
+        <span class="sys-tag">MoveIt 2</span>
+        <span class="sys-tag green">Nav2 Stack</span>
+        <span class="sys-tag green">TF2</span>
+        <span class="sys-tag amber">RViz2</span>
+        <span class="sys-tag amber">Gazebo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LiDAR / laser camera -->
+  <div class="img-slot" style="width:100%;height:100px;">
+    <img src="lasercam.png" alt="LiDAR laser camera sensor on rover">
+    <span class="sl">LiDAR SLAM Occupancy Grid</span>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h g"><span class="sec-label">Broader Impact</span></div>
+    <div class="sec-b">
+      <ul class="fl">
+        <li><div class="dot dr"></div><div>Reduces <span class="dn">human risk</span> in post-disaster environments</div></li>
+        <li><div class="dot dg"></div><div><span class="ok">Detect from above, act on the ground</span></div></li>
+        <li><div class="dot di"></div><div>Reusable <span class="ind">ROS 2 platform</span> for future research</div></li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- end col 3 -->
+</div><!-- end body -->
+</div><!-- end poster -->
+
+<!-- ══ SECTION ZOOM MODAL ══ -->
+<div class="sec-modal" id="secModal" onclick="closeSec(event)">
+  <div class="sec-card" id="secCard">
+    <div class="sec-card-head">
+      <div class="sec-card-title" id="secCardTitle"></div>
+      <button type="button" class="sec-card-close" onclick="forceCloseSec()">×</button>
+    </div>
+    <div class="sec-card-body" id="secCardBody"></div>
+  </div>
+</div>
+
+<!-- ══ MEDIA LIGHTBOX (images + videos) ══ -->
+<div class="sec-modal" id="mediaModal" style="z-index:10050;" onclick="closeMediaModal(event)">
+  <div class="sec-card sec-card-media" id="mediaCard" onclick="event.stopPropagation()">
+    <div class="sec-card-head">
+      <div class="sec-card-title" id="mediaCardTitle">Preview</div>
+      <button type="button" class="sec-card-close" onclick="forceCloseMediaModal()" aria-label="Close">×</button>
+    </div>
+    <div class="sec-card-body sec-card-body-media" id="mediaCardBody"></div>
+  </div>
+</div>
+
+<!-- ══ TEAM VRITAM MODAL ══ -->
+<div class="sec-modal" id="vritamTeamModal" role="dialog" aria-modal="true" aria-labelledby="vritamTeamModalTitle" onclick="closeVritamTeamModal(event)">
+  <div class="sec-card" id="vritamTeamCard">
+    <div class="sec-card-head">
+      <div class="sec-card-title" id="vritamTeamModalTitle">Team Vritam</div>
+      <button type="button" class="sec-card-close" onclick="forceCloseVritamTeamModal()" aria-label="Close">×</button>
+    </div>
+    <div class="sec-card-body">
+      <div class="vritam-team-modal-inner">
+        <img class="vritam-team-modal-logo" src="Vritam.png" alt="">
+        <div class="vritam-team-modal-copy">
+          <p class="vritam-team-modal-desc">Research and innovation team building embodied AI, robotics, and field systems for disaster response.</p>
+          <a class="vritam-team-modal-btn" href="https://vritamlabs.com" target="_blank" rel="noopener noreferrer">Visit Vritam Labs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('video').forEach(function(v) {
+  v.muted = true;
+  v.volume = 0;
+  v.controls = true;
+  v.addEventListener('volumechange', function() {
+    if(!this.muted || this.volume > 0) { this.muted = true; this.volume = 0; }
+  });
+});
+
+function getSlotCaption(slot){
+  var sl = slot.querySelector('.sl');
+  return sl ? sl.textContent.trim() : 'Preview';
+}
+
+function openMediaLightbox(kind, src, title, currentTime){
+  var body = document.getElementById('mediaCardBody');
+  body.innerHTML = '';
+  document.getElementById('mediaCardTitle').textContent = title || 'Preview';
+  if(kind === 'img'){
+    var im = document.createElement('img');
+    im.src = src;
+    im.alt = title || '';
+    body.appendChild(im);
+  } else {
+    var vid = document.createElement('video');
+    vid.src = src;
+    vid.controls = true;
+    vid.playsInline = true;
+    vid.autoplay = true;
+    vid.muted = true;
+    vid.loop = true;
+    vid.volume = 0;
+    if(typeof currentTime === 'number' && currentTime > 0) vid.currentTime = currentTime;
+    body.appendChild(vid);
+    vid.addEventListener('volumechange', function(){
+      if(!this.muted || this.volume > 0) { this.muted = true; this.volume = 0; }
+    });
+  }
+  document.getElementById('mediaModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function forceCloseMediaModal(){
+  var body = document.getElementById('mediaCardBody');
+  body.querySelectorAll('video').forEach(function(v){ v.pause(); });
+  body.innerHTML = '';
+  document.getElementById('mediaModal').classList.remove('open');
+  if(!document.getElementById('secModal').classList.contains('open') &&
+     !document.getElementById('vritamTeamModal').classList.contains('open')){
+    document.body.style.overflow = '';
+  }
+}
+
+function closeMediaModal(e){
+  if(e.target.id === 'mediaModal') forceCloseMediaModal();
+}
+
+function attachMediaLightbox(){
+  document.querySelectorAll('.img-slot').forEach(function(slot){
+    var img = slot.querySelector('img');
+    if(!img || slot.querySelector('.media-expand-btn')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'media-expand-btn';
+    btn.setAttribute('aria-label', 'Enlarge image');
+    btn.textContent = '⊕';
+    var cap = function(){ return getSlotCaption(slot); };
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      openMediaLightbox('img', img.src, cap());
+    });
+    slot.appendChild(btn);
+    img.addEventListener('click', function(e){
+      e.stopPropagation();
+      openMediaLightbox('img', img.src, cap());
+    });
+  });
+  document.querySelectorAll('.video-slot').forEach(function(slot){
+    var vid = slot.querySelector('video');
+    if(!vid || slot.querySelector('.media-expand-btn')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'media-expand-btn';
+    btn.setAttribute('aria-label', 'Enlarge video');
+    btn.textContent = '⊕';
+    var cap = function(){ return getSlotCaption(slot); };
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var t = vid.currentTime;
+      vid.pause();
+      openMediaLightbox('video', vid.currentSrc || vid.src, cap(), t);
+    });
+    slot.appendChild(btn);
+    vid.addEventListener('dblclick', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      var t = vid.currentTime;
+      vid.pause();
+      openMediaLightbox('video', vid.currentSrc || vid.src, cap(), t);
+    });
+  });
+}
+attachMediaLightbox();
+
+function openVritamTeamModal(){
+  document.getElementById('vritamTeamModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function forceCloseVritamTeamModal(){
+  document.getElementById('vritamTeamModal').classList.remove('open');
+  if(!document.getElementById('secModal').classList.contains('open') &&
+     !document.getElementById('mediaModal').classList.contains('open')) document.body.style.overflow='';
+}
+function closeVritamTeamModal(e){
+  if(e.target.id==='vritamTeamModal') forceCloseVritamTeamModal();
+}
+(function(){
+  var t=document.getElementById('vritamTeamTrigger');
+  if(!t) return;
+  t.addEventListener('click',function(e){ e.preventDefault(); openVritamTeamModal(); });
+  t.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openVritamTeamModal(); }
+  });
+})();
+
+function openSec(el){
+  const label=el.querySelector('.sec-label')?.textContent||'Detail';
+  const body=el.querySelector('.sec-b');
+  if(!body) return;
+  document.getElementById('secCardTitle').textContent=label;
+  const clone=body.cloneNode(true);
+  clone.querySelectorAll('input[type=file]').forEach(i=>i.remove());
+  document.getElementById('secCardBody').innerHTML='';
+  document.getElementById('secCardBody').appendChild(clone);
+  document.getElementById('secModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function forceCloseSec(){
+  document.getElementById('secModal').classList.remove('open');
+  if(!document.getElementById('vritamTeamModal').classList.contains('open') &&
+     !document.getElementById('mediaModal').classList.contains('open')) document.body.style.overflow='';
+}
+function closeSec(e){if(e.target.id==='secModal') forceCloseSec();}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape') return;
+  if(document.getElementById('mediaModal').classList.contains('open')) forceCloseMediaModal();
+  else if(document.getElementById('vritamTeamModal').classList.contains('open')) forceCloseVritamTeamModal();
+  else forceCloseSec();
+});
+document.querySelectorAll('.sec').forEach(function(sec){
+  sec.classList.add('zoomable');
+  sec.addEventListener('click',function(e){
+    if(e.target.closest('input,button,a,video')) return;
+    openSec(sec);
+  });
+});
+</script>
+</body>
+</html>
