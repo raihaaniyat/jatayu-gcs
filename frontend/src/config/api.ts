@@ -47,6 +47,7 @@ export const ENDPOINTS = {
   // Video
   videoStream: '/api/video/stream',
   videoStatus: '/api/video/status',
+  videoCameras: '/api/video/cameras',
   videoModelToggle: '/api/video/model/toggle',
   videoSource: '/api/video/source',
   videoDelete: (f: string) => `/api/video/upload/${encodeURIComponent(f)}`,

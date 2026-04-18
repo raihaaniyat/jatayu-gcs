@@ -98,7 +98,7 @@ export const useMissionStore = create<MissionState>((set) => ({
 
   // Telemetry
   telemetry: {
-    lat: 0, lon: 0, alt_m: 0, hdg: 0,
+    lat: 26.25104, lon: 78.17124, alt_m: 0, hdg: 0,
     mode: 'UNKNOWN', battery: null, link: 'offline',
   },
   setTelemetry: (t) => set((s) => ({ telemetry: { ...s.telemetry, ...t } })),

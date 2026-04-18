@@ -157,6 +157,10 @@ class ApiService {
     return this.request(ENDPOINTS.videoStatus);
   }
 
+  async getCameras(): Promise<{ index: number, name: string }[]> {
+    return this.request(ENDPOINTS.videoCameras);
+  }
+
   async toggleVideoModel(): Promise<{ success: boolean, model_loaded: boolean, message: string }> {
     return this.request(ENDPOINTS.videoModelToggle, { method: 'POST' });
   }
